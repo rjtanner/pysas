@@ -105,8 +105,19 @@ __version__ = f'startsas (startsas-{VERSION}) [{SAS_RELEASE}-{SAS_AKA}]'
 
 logger = TL('startsas')
 
-def run(iparsdic):
+def run(odfid=None,workdir='pwd',level='ODF',sasfiles=None,sas_ccf=None,
+        sas_odf=None,cifbuild_opts=None,odfingest_opts=None):
     """
+    odfid
+    workdir
+    sasfiles
+        sas_ccf
+        sas_odf
+    level
+    cifbuild_opts
+    odfingest_opts
+
+
     iparsdic is a dictionary which includes all the paramaters parsed from
     the command line (or entered in a list) merged with those read from the
     parameter file,  to be used to run the task.
