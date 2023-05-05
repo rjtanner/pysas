@@ -351,6 +351,10 @@ def run(odfid=None,workdir='pwd',level='ODF',sasfiles=False,sas_ccf=None,
             else:
                 levl = level
                 dest_dir = os.path.join(dest_dir,levl)
+            if levl == 'ODF':    
+                os.mkdir(odf_dir)
+            elif levl == 'PPS':
+                os.mkdir(pps_dir)
             archive_data = f'/home/idies/workspace/headata/FTP/xmm/data/rev0//{odfid}/{levl}'
             logger.log('info', f'Copying data from {archive_data} ...')
             print(f'\nCopying data from {archive_data} ...')
