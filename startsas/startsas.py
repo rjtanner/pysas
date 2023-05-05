@@ -345,14 +345,16 @@ def run(odfid=None,workdir='pwd',level='ODF',sasfiles=False,sas_ccf=None,
                         shutil.rmtree(os.path.join(path,direc))
         elif repo == 'sciserver':
             # Copies data into personal storage space.
+            dest_dir = obs_dir
             if level == 'ALL':
                 levl = ''
             else:
                 levl = level
+                dest_dir = os.path.join(dest_dir,levl)
             archive_data = f'/home/idies/workspace/headata/FTP/xmm/data/rev0//{odfid}/{levl}'
             logger.log('info', f'Copying data from {archive_data} ...')
             print(f'\nCopying data from {archive_data} ...')
-            shutil.copytree(archive_data,obs_dir,dirs_exist_ok=True)
+            shutil.copytree(archive_data,dest_dir,dirs_exist_ok=True)
 
         # Check if data is encrypted. Decrypt the data.
         encrypted = glob.glob('**/*.gpg', recursive=True)
