@@ -352,7 +352,7 @@ def run(odfid=None,workdir='pwd',level='ODF',sasfiles=False,sas_ccf=None,
             archive_data = f'/home/idies/workspace/headata/FTP/xmm/data/rev0//{odfid}/{levl}'
             logger.log('info', f'Copying data from {archive_data} ...')
             print(f'\nCopying data from {archive_data} ...')
-            shutil.copytree(archive_data,obs_dir)
+            shutil.copytree(archive_data,obs_dir,dirs_exist_ok=True)
 
         # Check if data is encrypted. Decrypt the data.
         encrypted = glob.glob('**/*.gpg', recursive=True)
