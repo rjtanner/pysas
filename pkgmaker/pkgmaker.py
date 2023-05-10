@@ -76,7 +76,7 @@ def run(iparsdic):
 
     # Additional check: SAS_DIR must be equal to saspath[1] 
 
-    if ( saspath[1] != sasdir ):
+    if sasdir not in saspath:
         print(f'Error: pkgmaker: Mismatching paths\n{saspath[1]}\n{sasdir}')
         sys.exit(1)
 
