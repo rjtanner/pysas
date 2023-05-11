@@ -6,6 +6,19 @@ Created on Wed Apr 26 12:39:28 2023
 @author: rtanner2
 """
 
+import pysas
+
+sas_dir = '/home/rtanner2/sas/xmmsas_20230412_1735'
+sas_ccfpath = '/home/rtanner2/sas/calibration'
+data_dir = '/home/rtanner2/xmm_data'
+obsid = '0802710101'
+
+odf = pysas.odfcontrol.ODF(obsid)
+odf.inisas(sas_dir, sas_ccfpath)
+odf.setodf(obsid,data_dir=data_dir,level='ODF',overwrite=True,repo='heasarc')
+
+
+
 import os
 import os.path
 import numpy as np
@@ -13,41 +26,7 @@ import matplotlib.pyplot as plt
 from astropy.io import fits
 from astropy.table import Table
 from matplotlib.colors import LogNorm
-
-##################################################################
-##################################################################
-sas_dir = '/home/rtanner2/sas/xmmsas_20230412_1735'
-sas_ccfpath = '/home/rtanner2/sas/calibration'
-pythonpath = os.environ.get('PYTHONPATH')
-if pythonpath is not None:
-    pythonpath = pythonpath.split(os.pathsep)
-else:
-    pythonpath = [] 
-pysas_dir = os.path.join(sas_dir,'lib','python')
-if not pysas_dir in pythonpath:
-    pythonpath.append(pysas_dir)
-    os.environ['PYTHONPATH'] = os.pathsep.join(pythonpath)
-
-from pysas.initializesas import sas_initialize
-sas_initialize(sas_dir=sas_dir,sas_ccfpath=sas_ccfpath)
-##################################################################
-##################################################################
-
-
-import pysas21
-
-data_dir = '/home/rtanner2/xmm_data'
-if not os.path.exists(data_dir):
-    os.mkdir(data_dir)
-obsid = '0802710101'
-level = 'ODF'
-
-pysas21.startsas.run(odfid=obsid,workdir=data_dir,level='ODF',
-        overwrite=True,repo='heasarc')
-
-
 from pysas.wrapper import Wrapper as w
-
 
 # SAS Command
 cmd    = 'epproc'  # SAS task to be executed
