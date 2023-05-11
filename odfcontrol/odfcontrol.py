@@ -65,7 +65,7 @@ class ODF(object):
         self.odfid = odfid
         self.data_dir = data_dir
 
-    def inisas(self,sas_dir,sas_ccfpath,verbosity = 4,suppress_warning = 1):
+    def inisas(self,sas_dir,sas_ccfpath,verbosity=4,suppress_warning=1):
         """
         Simple wrapper for inisas defined below.
         """
@@ -75,7 +75,18 @@ class ODF(object):
         self.verbosity = verbosity
         self.suppress_warning = suppress_warning
 
-        inisas(sas_dir, sas_ccfpath, verbosity = verbosity, suppress_warning = suppress_warning)
+        inisas(self.sas_dir, self.sas_ccfpath, verbosity = self.verbosity, suppress_warning = self.suppress_warning)
+
+    def sastalk(self,verbosity=4,suppress_warning=1):
+        """
+        Simple function to set general SAS veriables.
+        """
+
+        self.verbosity = verbosity
+        self.suppress_warning = suppress_warning
+
+        os.environ['SAS_VERBOSITY'] = '{}'.format(self.verbosity)
+        os.environ['SAS_SUPPRESS_WARNING'] = '{}'.format(self.suppress_warning)
 
     def setodf(self,odfid,data_dir=None,level='ODF',
                sas_ccf=None,sas_odf=None,
