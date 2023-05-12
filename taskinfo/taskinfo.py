@@ -33,9 +33,25 @@ import os, sys, subprocess, shutil, glob, tarfile, gzip
 # Local application imports
 # from .version import VERSION, SAS_RELEASE, SAS_AKA
 from pysas.logger import TaskLogger as TL
+from pysas.sastask import MyTask
 
 
 # __version__ = f'taskinfo (taskinfo-{VERSION}) [{SAS_RELEASE}-{SAS_AKA}]' 
 __version__ = 'taskinfo (taskinfo-0.1)'
 
 logger = TL('taskinfo')
+
+class Task(object):
+    """
+    
+    
+    """
+
+    def __init__(self,name):
+        self.name = name
+        self.MyTask = MyTask(self.name,None)
+        self.MyTask.readparfile()
+
+    # def getinfo(self):
+        
+        
