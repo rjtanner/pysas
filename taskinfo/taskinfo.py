@@ -43,15 +43,60 @@ logger = TL('taskinfo')
 
 class Task(object):
     """
-    
+    Object for basic information on a single task. Will display task inputs and desciptions.
     
     """
 
-    def __init__(self,name):
+    def __init__(self,name,print_help=False,display_info=False):
         self.name = name
-        self.MyTask = MyTask(self.name,None)
+        self.MyTask = MyTask(self.name,[])
         self.MyTask.readparfile()
+        self.allparams = self.MyTask.allparams
+        self.paramnames = self.allparams.keys()
+        if print_help:
+            self.printHelp()
+        if display_info:
+            self.taskinfo()
 
-    # def getinfo(self):
+    def taskinfo(self):
+        inputstr = ''
+        for pname in self.paramnames:
+            inputstr = inputstr + '{}, '.format(pname)
+        inputstr = inputstr[:-2]
+        dispstr = '\nTask: {}({})\n\n'.format(self.name,inputstr)
+        for pname in self.paramnames:
+            pinfo = self.allparams[pname]
+            # if pinfo['type'] == 'bool' and pinfo['default'] == 'yes': pinfo['default'] = True
+            # if pinfo['type'] == 'bool' and pinfo['default'] == 'no': pinfo['default'] = False
+            dispstr += 'Parameter  : {}\n'.format(pinfo['id'])
+            dispstr += '  type        : {}\n'.format(pinfo['type'])
+            dispstr += '  default     : {}\n'.format(pinfo['default'])
+            dispstr += '  mandatory   : {}\n'.format(pinfo['mandatory'])
+            dispstr += '  list        : {}\n'.format(pinfo['list'])
+            dispstr += '  description : {}\n'.format(pinfo['description'])
+            if 'constraints' in list(pinfo.keys()):
+                dispstr += '  constraints : {}\n'.format(pinfo['constraints'])
+            dispstr += '\n'
+        print(dispstr)
         
+    def printHelp(self):
+        self.MyTask.printHelp()
         
+class AllTasks(object):
+    """
+    
+
+    """
+
+    def __init__(self):
+
+        sas_path = os.environ['SAS_PATH'].split(':')
+        for path in sas_path:
+            parfile = '*.par'
+            self.files = glob.glob(os.path.join(path, 'config', parfile))
+            self.tasklist = []
+            for pfile in self.files:
+                task_name = os.path.splitext(os.path.basename(pfile))[0]
+                self.tasklist.append(task_name)
+                print(task_name)
+

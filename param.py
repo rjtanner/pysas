@@ -32,7 +32,7 @@ defaultValues: 	Returns a dictionary with the default values for each parameter.
 Functions:
 att(p):                     Fills in the attributes of parameter p
 getsub(p):                  Obtains the sub-parameters of parameter p
-el2nam(p, pels):            Gets the name off parameter element p
+el2nam(p, pels):            Gets the name of parameter element p
 nam2el(pname, rev_pels):    Gets the element of parameter name pname
 
 

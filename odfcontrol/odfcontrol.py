@@ -12,11 +12,11 @@
 #
 #    SAS is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 #    GNU General Public License for more details.
 #
 #    You should have received a copy of the GNU General Public License
-#    along with SAS.  If not, see <http://www.gnu.org/licenses/>.
+#    along with SAS. If not, see <http://www.gnu.org/licenses/>.
 
 # odfcontrol.py
 
@@ -29,16 +29,17 @@ odfcontrol.py
 import os, sys, subprocess, shutil, glob, tarfile, gzip
 
 # Third party imports
-# (se below for astroquery)
+# (see below for astroquery)
 
 # Local application imports
 # from .version import VERSION, SAS_RELEASE, SAS_AKA
-# from pysas.wrapper import Wrapper as wrap
 from pysas.logger import TaskLogger as TL
+from pysas.configutils import initializesas, sas_cfg
 
 
 # __version__ = f'odfcontrol (startsas-{VERSION}) [{SAS_RELEASE}-{SAS_AKA}]' 
 __version__ = 'odfcontrol (odfcontrol-0.1)'
+__all__ = ['_ODF', 'download_data']
 
 logger = TL('odfcontrol')
 
@@ -64,18 +65,20 @@ class ODF(object):
     def __init__(self,odfid,data_dir=None):
         self.odfid = odfid
         self.data_dir = data_dir
+        data_dir = sas_cfg.get("sas", "data_dir")
+        if os.path.exists(data_dir):
+            self.data_dir = data_dir
 
     def inisas(self,sas_dir,sas_ccfpath,verbosity=4,suppress_warning=1):
         """
-        Simple wrapper for inisas defined below.
+        Simple wrapper for initializesas defined in configutils.
         """
-
         self.sas_dir = sas_dir
         self.sas_ccfpath = sas_ccfpath
         self.verbosity = verbosity
         self.suppress_warning = suppress_warning
 
-        inisas(self.sas_dir, self.sas_ccfpath, verbosity = self.verbosity, suppress_warning = self.suppress_warning)
+        initializesas(self.sas_dir, self.sas_ccfpath, verbosity = self.verbosity, suppress_warning = self.suppress_warning)
 
     def sastalk(self,verbosity=4,suppress_warning=1):
         """
@@ -164,15 +167,15 @@ class ODF(object):
 
         sasdir = os.environ.get('SAS_DIR')
         if not sasdir:
-            logger.log('error', 'SAS_DIR is not defined. Please initialise SAS')
-            raise Exception('SAS_DIR is not defined. Please initialise SAS')
+            logger.log('error', 'SAS_DIR is not defined. Please initialise SAS.')
+            raise Exception('SAS_DIR is not defined. Please initialise SAS.')
         else:
             logger.log('info', f'SAS_DIR = {sasdir}') 
 
         sasccfpath = os.environ.get('SAS_CCFPATH')
         if not sasccfpath:
-            logger.log('error', 'SAS_CCFPATH not set. Please define it')
-            raise Exception('SAS_CCFPATH not set. Please define it')
+            logger.log('error', 'SAS_CCFPATH not set. Please define it.')
+            raise Exception('SAS_CCFPATH not set. Please define it.')
         else:
             logger.log('info',f'SAS_CCFPATH = {sasccfpath}')
 
@@ -181,7 +184,11 @@ class ODF(object):
         logger.log('info',f'setodf was initiated from {startdir}')
 
         if self.data_dir == None:
-            self.data_dir = startdir
+            data_dir = sas_cfg.get("sas", "data_dir")
+            if os.path.exists(data_dir):
+                self.data_dir = data_dir
+            else:
+                self.data_dir = startdir
             
         # If data_dir was not given as an absolute path, it is interpreted
         # as a subdirectory of startdir
@@ -423,99 +430,6 @@ class ODF(object):
             SAS_CCF = {fullccfcif}
             SAS_ODF = {fullsumsas}
             \n''')
-
-
-def inisas(sas_dir, sas_ccfpath, verbosity = 4, suppress_warning = 1):
-    """
-    Heasoft must be initialized first, separately.
-
-    Inputs are:
-
-        - sas_dir (required) directory where SAS is installed.
-
-        - sas_ccfpath (required) directory where calibration files are located.
-
-        - verbosity (optional, default = 4) SAS verbosity.
-
-        - suppress_warning (optional, default = 1) 
-    """
-    
-    def add_environ_variable(variable,invalue,prepend=True):
-        """
-        variable (str) is the name of the environment variable to be set.
-        
-        value (str, or list) is the value to which the environment variable
-        will be set.
-        
-        prepend (boolean) default=True, whether to prepend or append the 
-        variable
-        
-        The function first checks if the enviroment variable already exists.
-        If not it will be created and set to value.
-        If veriable alread exists the function will check if value is already
-        present. If not it will add it either prepending (default) or appending.
-
-        Returns
-        -------
-        None.
-
-        """
-        
-        if isinstance(invalue, str):
-            listvalue = [invalue]
-        else:
-            listvalue = invalue
-            
-        if not isinstance(listvalue, list):
-            raise Exception('Input to add_environ_variable must be str or list!')
-        
-        for value in listvalue:
-            environ_var = os.environ.get(variable)
-            
-            if not environ_var:
-                os.environ[variable] = value
-            else:
-                splitpath = environ_var.split(os.pathsep)
-                if not value in splitpath:
-                    if prepend:
-                        splitpath.insert(0,value)
-                    else:
-                        splitpath.append(value)
-                os.environ[variable] = os.pathsep.join(splitpath)
-
-    # Checking LHEASOFT and inputs
-
-    lheasoft = os.environ.get('LHEASOFT')
-    if not lheasoft:
-        raise Exception('LHEASOFT is not set. Please initialise HEASOFT')
-    if sas_dir is None:
-        raise Exception('sas_dir must be provided to initialize SAS using initializesas.')
-    if sas_ccfpath is None:
-        raise Exception('sas_ccfpath must be provided to initialize SAS using initializesas.')
-
-    add_environ_variable('SAS_DIR',sas_dir)
-    add_environ_variable('SAS_CCFPATH',sas_ccfpath)
-    add_environ_variable('SAS_PATH',[sas_dir])
-    
-    binpath = [os.path.join(sas_dir,'bin'), os.path.join(sas_dir,'bin','devel')]
-    libpath = [os.path.join(sas_dir,'lib'),os.path.join(sas_dir,'libextra'),os.path.join(sas_dir,'libsys')]
-    perlpath = [os.path.join(sas_dir,'lib','perl5')]
-    pythonpath = [os.path.join(sas_dir,'lib','python')]
-
-    add_environ_variable('SAS_PATH',binpath+libpath+perlpath+pythonpath,prepend=False)
-    add_environ_variable('PATH',binpath)
-    add_environ_variable('LIBRARY_PATH',libpath,prepend=False)
-    add_environ_variable('LD_LIBRARY_PATH',libpath,prepend=False)
-    add_environ_variable('PERL5LIB',perlpath)
-    add_environ_variable('PYTHONPATH',pythonpath)
-
-    perllib = os.environ.get('PERLLIB')
-    if perllib:
-        splitpath = perllib.split(os.pathsep)
-        add_environ_variable('PERL5LIB',splitpath,prepend=False)
-
-    os.environ['SAS_VERBOSITY'] = '{}'.format(verbosity)
-    os.environ['SAS_SUPPRESS_WARNING'] = '{}'.format(suppress_warning)
 
 def download_data(odfid,data_dir,level='ODF',encryption_key=None,repo='esa'):
     """

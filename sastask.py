@@ -191,6 +191,7 @@ class MyTask(SASTask):
     def readparfile(self):
         t = paramXmlInfoReader(self.taskname)
         t.xmlParser()
+        self.paramXmlInfo = t
         self.allparams = t.allparams
         self.mandparams = t.mandpar
         self.mainparams = t.mainparams
@@ -327,3 +328,6 @@ class MyTask(SASTask):
             return self.Exit
         r = RunTask(self.taskname, self.iparsdic,self.logFile)
         r.run()
+
+    def printHelp(self):
+        self.paramXmlInfo.printHelp()
