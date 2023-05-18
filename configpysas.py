@@ -39,63 +39,94 @@ import os
 
 # Local application imports
 from pysas.logger import TaskLogger as TL
-from pysas.configutils import initializesas, sas_cfg, set_sas_config_default
+from pysas.configutils import initializesas, sas_cfg, set_sas_config_default, logger
 
 __version__ = 'configpysas (configpysas-0.1)'
 
-logger = TL('configpysas')
-
-sas_dir          = sas_cfg.get('sas','sas_dir')
-sas_ccfpath      = sas_cfg.get('sas','sas_ccfpath')
-data_dir         = sas_cfg.get('sas','data_dir')
 verbosity        = sas_cfg.get('sas','verbosity')
 suppress_warning = sas_cfg.get('sas','suppress_warning')
 
-outcomment=['The purpose of this script is so that the user can set the pySAS',
-            'defaults sas_dir and sas_ccfpath. Once the defaults are set by',
-            'the user, SAS will be automatically initialized when pySAS is',
-            'imported (import pysas).',
-            '',
-            'The user can also optionally set a default data directory (data_dir)',
-            'now or set it later using set_sas_config_default(\'data_dir\',/path/to/data/dir/).',
-            'For example:',
-            '',
-            'from pysas.configutils import set_sas_config_default',
-            'set_sas_config_default(\'data_dir\',/path/to/data/dir/)',
-            '',
-            'The default values for SAS verbosity and suppress_warning can also be',
-            'set in the same way.',
-            '\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n']
+outcomment="""
 
-for single_line in outcomment:
-    print(single_line)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-if sas_dir == "/does/not/exist":
-    logger.log('info', 'SAS_DIR not set. User must input SAS_DIR.')
-    print('\nSAS_DIR not set. Please provide the full path to the SAS install directory (SAS_DIR).\n')
-    sas_dir = input('Full path to SAS: ')
-    print('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+    The purpose of this script is so that the user can set the pySAS
+    defaults sas_dir and sas_ccfpath. Once the defaults are set by
+    the user, SAS will automatically be initialized when pySAS is
+    imported (import pysas).
 
-if sas_ccfpath == "/does/not/exist":
-    logger.log('info', 'SAS_CCFPATH not set. User must input SAS_CCFPATH.')
-    print('SAS_CCFPATH not set. Please provide the full path to the SAS calibration directory (SAS_CCFPATH)\n')
-    sas_ccfpath = input('Full path to calibration files: ')
-    print('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+    The user can also optionally set a default data directory (data_dir)
+    now or set it later using the function set_sas_config_default().
 
-if data_dir == "/does/not/exist":
-    logger.log('info', 'Default data directory not set. User can set default data direcotry.\n')
-    print('Default data directory not set. Please provide the full path to the user data directory (OPTIONAL)\n')
-    data_dir = input('Full path to user data directory (OPTIONAL): ')
-    # Check if data_dir exists. If not then create it.
-    if not os.path.isdir(data_dir):
-        logger.log('warning', f'{data_dir} does not exist. Creating it!')
-        os.mkdir(data_dir)
-        logger.log('info', f'{data_dir} has been created!')
-    else:
-        logger.log('info', f'Data directory exist. Will use {data_dir} to download data.')
-    set_sas_config_default('data_dir',data_dir)
-    print('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+    For example:
 
+        from pysas.configutils import set_sas_config_default
+        data_path = '/path/to/data/dir/'
+        set_sas_config_default('data_dir', data_path)
+
+    The default values for SAS 'verbosity' and 'suppress_warning' can
+    also be set in the same way.
+
+    At any time the user can clear all previous values with,
+
+        from pysas.configutils import clear_sas_defaults
+        clear_sas_defaults()
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"""
+
+print(outcomment)
+
+# Ask for SAS_DIR path
+logger.log('info', 'SAS_DIR not set. User must input SAS_DIR.')
+scomment = """
+
+    SAS_DIR not set.
+
+    Please provide the full path to the SAS install directory (SAS_DIR).
+
+"""
+print(scomment)
+sas_dir = input('Full path to SAS: ')
+print('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
+# Ask for SAS_CCFPATH path
+logger.log('info', 'SAS_CCFPATH not set. User must input SAS_CCFPATH.')
+scomment = """
+
+    SAS_CCFPATH not set.
+
+    Please provide the full path to the SAS calibration directory (SAS_CCFPATH).
+
+"""
+print(scomment)
+sas_ccfpath = input('Full path to calibration files: ')
+print('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
+# Ask for data_dir path
+logger.log('info', 'Default data directory not set. User can set default data direcotry.\n')
+scomment = """
+
+    No default data directory.
+
+    Please provide the full path to the user data directory (OPTIONAL).
+
+"""
+print(scomment)
+data_dir = input('Full path to user data directory (OPTIONAL): ')
+print('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
+# Check if data_dir exists. If not then create it.
+if not os.path.isdir(data_dir):
+    logger.log('warning', f'{data_dir} does not exist. Creating it!')
+    os.mkdir(data_dir)
+    logger.log('info', f'{data_dir} has been created!')
+else:
+    logger.log('info', f'Data directory exist. Will use {data_dir} to download data.')
+set_sas_config_default('data_dir',data_dir)
+
+# Check if paths for SAS_DIR and SAS_CCFPATH exist.
 if os.path.exists(sas_dir) and os.path.exists(sas_ccfpath):
     logger.log('info', 'SAS_DIR and SAS_CCFPATH exist. Will use SAS_DIR and SAS_CCFPATH to initialize SAS.')
     set_sas_config_default('sas_dir',sas_dir)
@@ -114,7 +145,21 @@ else:
     else:
         logger.log('info', f'Default SAS_CCFPATH = {sas_ccfpath}')
 
-print('Success!')
-print(f'SAS_DIR set to {sas_dir}')
-print(f'SAS_CCFPATH set to {sas_ccfpath}')
-print(f'data_dir set to {data_dir}')
+scomment = f"""
+
+    Success!
+
+    SAS_DIR set to {sas_dir}
+    SAS_CCFPATH set to {sas_ccfpath}
+    data_dir set to {data_dir}
+
+    Upon running the command 'import pysas' SAS will 
+    automatically be initialized.
+
+    At any time the user can clear all previous values with,
+
+        from pysas.configutils import clear_sas_defaults
+        clear_sas_defaults()
+
+"""
+print(scomment)

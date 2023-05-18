@@ -34,14 +34,12 @@ import os, sys, subprocess, shutil, glob, tarfile, gzip
 # Local application imports
 # from .version import VERSION, SAS_RELEASE, SAS_AKA
 from pysas.logger import TaskLogger as TL
-from pysas.configutils import initializesas, sas_cfg
+from pysas.configutils import initializesas, sas_cfg, logger
 
 
 # __version__ = f'odfcontrol (startsas-{VERSION}) [{SAS_RELEASE}-{SAS_AKA}]' 
 __version__ = 'odfcontrol (odfcontrol-0.1)'
 __all__ = ['_ODF', 'download_data']
-
-logger = TL('odfcontrol')
 
 class ODF(object):
     """

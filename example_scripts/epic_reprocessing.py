@@ -4,20 +4,35 @@
 Created on Wed Apr 26 12:39:28 2023
 
 @author: rtanner2
+
+    This script assumes that default directories for SAS and SAS calibration 
+    files have already been set using the script configpysas.py. 
+    
+    If configpysas.py has not been run then the user will need to set the
+    defaults by running the command:
+
+        from pysas import configpysas
+
+    and then inputing the paths for SAS_DIR and SAS_CCFPATH. 
+
+    SAS is initialized automatically upon import (import pysas).
+
+    This script will download data for a single obsID, run cfibuild and 
+    odfingest. Then it will run epproc and emproc without options.
+
 """
 
 import pysas
 
-sas_dir = '/home/rtanner2/sas/xmmsas_20230412_1735'
-sas_ccfpath = '/home/rtanner2/sas/calibration'
 data_dir = '/home/rtanner2/xmm_data'
 obsid = '0802710101'
 
 odf = pysas.odfcontrol.ODF(obsid)
-odf.inisas(sas_dir, sas_ccfpath)
+# Specifies a data direcotry where the odf files will be downloaded.
+# Specifies the level of data products ('ODF'). Will automatically 
+# overwrite any previous data products with the same obsid.
+# Requests the data from the HEASARC archive at NASA.
 odf.setodf(obsid,data_dir=data_dir,level='ODF',overwrite=True,repo='heasarc')
-
-
 
 import os
 import os.path

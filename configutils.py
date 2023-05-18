@@ -36,7 +36,7 @@ from pysas.logger import TaskLogger as TL
 
 __version__ = 'configutils (configutils-0.1)'
 
-logger = TL('configutils')
+logger = TL('general_sas')
 
 # Function to initialize SAS
 
@@ -146,7 +146,6 @@ def initializesas(sas_dir, sas_ccfpath, verbosity = 4, suppress_warning = 1):
     logger.log('info', f'SAS_VERBOSITY set to {verbosity}')
     logger.log('info', f'SAS_SUPPRESS_WARNING set to {suppress_warning}')
 
-
 # Configuration
 
 sas_cfg_defaults = {
@@ -157,12 +156,17 @@ sas_cfg_defaults = {
     "suppress_warning": 1,
 }
 
+on_sci_server = False
+
+if os.path.expanduser("~") == '/home/idies':
+    on_sci_server = True
+
 config_root = os.environ.get(
     "XDG_CONFIG_HOME", os.path.join(os.path.expanduser("~"), ".config")
 )
 CONFIG_DIR = os.path.join(config_root, "sas")
 
-if not os.path.exists(CONFIG_DIR):
+if not os.path.exists(CONFIG_DIR) and not on_sci_server:
     try:
         os.makedirs(CONFIG_DIR)
     except OSError:
@@ -171,7 +175,7 @@ if not os.path.exists(CONFIG_DIR):
 
 CURRENT_CONFIG_FILE = os.path.join(CONFIG_DIR, "sas.cfg")
 
-if not os.path.exists(CURRENT_CONFIG_FILE):
+if not os.path.exists(CURRENT_CONFIG_FILE) and not on_sci_server:
     cp = ConfigParser()
     cp.add_section("sas")
     try:
@@ -182,22 +186,23 @@ if not os.path.exists(CURRENT_CONFIG_FILE):
         raise Exception( f'Unable to write to SAS config file: {CURRENT_CONFIG_FILE}')
 
 sas_cfg = ConfigParser(sas_cfg_defaults)
-sas_cfg.read([CURRENT_CONFIG_FILE, "sas.cfg"])
-if not sas_cfg.has_section("sas"):
+if not on_sci_server:
+    sas_cfg.read([CURRENT_CONFIG_FILE, "sas.cfg"])
+if not sas_cfg.has_section("sas") and not on_sci_server:
     sas_cfg.add_section("sas")
 
 sas_dir     = sas_cfg.get("sas", "sas_dir")
 sas_ccfpath = sas_cfg.get("sas", "sas_ccfpath")
 
-if sas_dir == "/does/not/exist":
+if sas_dir == "/does/not/exist" and not on_sci_server:
     logger.log('info', f'SAS_DIR not set. User must manually set SAS_DIR and initialize SAS.')
     print(f'SAS_DIR not set. User must manually set SAS_DIR and initialize SAS.')
 
-if sas_ccfpath == "/does/not/exist":
+if sas_ccfpath == "/does/not/exist" and not on_sci_server:
     logger.log('info', f'SAS_CCFPATH not set. User must manually set SAS_CCFPATH and initialize SAS.')
     print(f'SAS_CCFPATH not set. User must manually set SAS_CCFPATH and initialize SAS.')
 
-if os.path.exists(sas_dir) and os.path.exists(sas_ccfpath):
+if os.path.exists(sas_dir) and os.path.exists(sas_ccfpath) and not on_sci_server:
     initializesas(sas_dir, sas_ccfpath)
     logger.log('info', f'SAS_DIR and SAS_CCFPATH exist. Will use SAS_DIR and SAS_CCFPATH to initialize SAS.')
 else:
