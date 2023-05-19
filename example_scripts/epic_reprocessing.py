@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+
 """
 Created on Wed Apr 26 12:39:28 2023
 
@@ -24,123 +24,19 @@ Created on Wed Apr 26 12:39:28 2023
 
 import pysas
 
-data_dir = '/home/rtanner2/xmm_data'
 obsid = '0802710101'
 
 odf = pysas.odfcontrol.ODF(obsid)
-# Specifies a data direcotry where the odf files will be downloaded.
-# Specifies the level of data products ('ODF'). Will automatically 
-# overwrite any previous data products with the same obsid.
-# Requests the data from the HEASARC archive at NASA.
-odf.setodf(obsid,data_dir=data_dir,level='ODF',overwrite=True,repo='heasarc')
+odf.setodf(obsid,repo='heasarc')
 
-import os
-import os.path
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
 from astropy.table import Table
 from matplotlib.colors import LogNorm
-from pysas.wrapper import Wrapper as w
 
-# SAS Command
-cmd    = 'epproc'  # SAS task to be executed
-
-# Arguments of SAS Command 'epproc'
-inargs = []        # comma separated arguments for SAS task
-
-print("   SAS command to be executed: "+cmd+", with arguments; \n")
-inargs
-
-print("Running epproc ..... \n")
-
-# Check if epproc has already run. If it has, do not run again 
-exists = 0
-pnevt_list = []
-for root, dirs, files in os.walk("."):  
-    for filename in files:
-        if (filename.find('EPN') != -1) and filename.endswith('ImagingEvts.ds'):
-            pnevt_list.append(filename)
-            exists = 1        
-if exists:    
-    print(" > " + str(len(pnevt_list)) + " EPIC-pn event list found. Not running epproc again.\n")
-    for x in pnevt_list:
-        print("    " + x + "\n")
-    print("..... OK")
-else:
-    w(cmd,inargs).run()      # <<<<< Execute SAS task
-    exists = 0
-    pnevt_list = []
-    for root, dirs, files in os.walk("."):  
-        for filename in files:
-            if (filename.find('EPN') != -1) and filename.endswith('ImagingEvts.ds'):
-                pnevt_list.append(filename)
-                exists = 1        
-    if exists:    
-        print(" > " + str(len(pnevt_list)) + " EPIC-pn event list found after running epproc.\n")
-        for x in pnevt_list:
-            print("    " + x + "\n")
-        print("..... OK")
-    else:
-        print("Something has gone wrong with epproc. I cant find any event list files after running. \n")
-        
-
-
-# SAS Command
-cmd    = 'emproc'  # SAS task to be executed
-
-# Arguments of SAS Command 'emproc'
-inargs = []        # comma separated arguments for SAS task
-
-print("   SAS command to be executed: "+cmd+", with arguments; \n")
-inargs
-
-print("Running emproc ..... \n")
-
-# Check if emproc has already run. If it has, do not run again 
-exists = 0
-m1evt_list = []
-m2evt_list = []
-for root, dirs, files in os.walk("."):  
-    for filename in files:
-        if (filename.find('EMOS1') != -1) and filename.endswith('ImagingEvts.ds'):
-            m1evt_list.append(filename)
-            exists = 1 
-        if (filename.find('EMOS2') != -1) and filename.endswith('ImagingEvts.ds'):
-            m2evt_list.append(filename)
-            exists = 1            
-if exists:    
-    print(" > " + str(len(m1evt_list)) + " EPIC-MOS1 event list found. Not running emproc again.\n")
-    for x in m1evt_list:
-        print("    " + x + "\n")
-    print(" > " + str(len(m2evt_list)) + " EPIC-MOS2 event list found. Not running emproc again.\n")
-    for x in m2evt_list:
-        print("    " + x + "\n")
-    print("..... OK")
-else:
-    w(cmd,inargs).run()      # <<<<< Execute SAS task
-    exists = 0 
-    m1evt_list = []
-    m2evt_list = []
-    for root, dirs, files in os.walk("."):  
-        for filename in files:
-            if (filename.find('EMOS1') != -1) and filename.endswith('ImagingEvts.ds'):
-                m1evt_list.append(filename)
-                exists = 1 
-            if (filename.find('EMOS2') != -1) and filename.endswith('ImagingEvts.ds'):
-                m2evt_list.append(filename)
-                exists = 1            
-    if exists:    
-        print(" > " + str(len(m1evt_list)) + " EPIC-MOS1 event list found. Not running emproc again.\n")
-        for x in m1evt_list:
-            print("    " + x + "\n")
-        print(" > " + str(len(m2evt_list)) + " EPIC-MOS2 event list found. Not running emproc again.\n")
-        for x in m2evt_list:
-            print("    " + x + "\n")
-        print("..... OK")
-    else:
-        print("Something has gone wrong with emproc. I cant find any event list file. \n")
-        
+odf.runanalysis('epproc',[],rerun=False)
+odf.runanalysis('emproc',[],rerun=False)
 
 # For display purposes only, define a minimum filtering criteria for EPIC-pn
 
@@ -160,9 +56,9 @@ plt.figure(figsize=(15,20))
 
 pl=1
 
-evts=len(pnevt_list)+len(m1evt_list)+len(m2evt_list)
-if len(pnevt_list) >0:
-    for x in pnevt_list:  
+evts=len(odf.pnevt_list)+len(odf.m1evt_list)+len(odf.m2evt_list)
+if len(odf.pnevt_list) >0:
+    for x in odf.pnevt_list:  
         hdu_list = fits.open(x, memmap=True)
         evt_data = Table(hdu_list[1].data)
         
@@ -228,8 +124,8 @@ if len(pnevt_list) >0:
 
         hdu_list.close()
     
-if len(m1evt_list) >0:
-    for x in m1evt_list:
+if len(odf.m1evt_list) >0:
+    for x in odf.m1evt_list:
         hdu_list = fits.open(x, memmap=True)
         evt_data = Table(hdu_list[1].data)
 
@@ -295,8 +191,8 @@ if len(m1evt_list) >0:
     
         hdu_list.close()
     
-if len(m2evt_list) >0:
-    for x in m2evt_list:
+if len(odf.m2evt_list) >0:
+    for x in odf.m2evt_list:
         hdu_list = fits.open(x, memmap=True)
         evt_data = Table(hdu_list[1].data)
 

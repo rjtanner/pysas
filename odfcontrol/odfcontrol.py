@@ -35,6 +35,7 @@ import os, sys, subprocess, shutil, glob, tarfile, gzip
 # from .version import VERSION, SAS_RELEASE, SAS_AKA
 from pysas.logger import TaskLogger as TL
 from pysas.configutils import initializesas, sas_cfg, logger
+from pysas.wrapper import Wrapper as w
 
 
 # __version__ = f'odfcontrol (startsas-{VERSION}) [{SAS_RELEASE}-{SAS_AKA}]' 
@@ -428,6 +429,93 @@ class ODF(object):
             SAS_CCF = {fullccfcif}
             SAS_ODF = {fullsumsas}
             \n''')
+
+    def runanalysis(self,task,inargs,rerun=False):
+        """
+        
+        """
+        self.task = task
+        self.inargs = inargs
+        self.rerun = rerun
+
+        print(f"   SAS command to be executed: {self.task}, with arguments; \n{self.inargs}")
+        print(f"Running {self.task} ..... \n")
+
+        if self.task == 'epproc':
+            # Check if epproc has already run. If it has, do not run again 
+            exists = False
+            self.pnevt_list = []
+            for root, dirs, files in os.walk("."):  
+                for filename in files:
+                    if (filename.find('EPN') != -1) and filename.endswith('ImagingEvts.ds'):
+                        self.pnevt_list.append(os.path.join(root,filename))
+                        exists = True
+            if exists and not self.rerun:    
+                print(" > " + str(len(self.pnevt_list)) + " EPIC-pn event list found. Not running epproc again.\n")
+                for x in self.pnevt_list:
+                    print("    " + x + "\n")
+                print("..... OK")
+            else:
+                w(self.task,self.inargs).run()      # <<<<< Execute SAS task
+                exists = False
+                self.pnevt_list = []
+                for root, dirs, files in os.walk("."):  
+                    for filename in files:
+                        if (filename.find('EPN') != -1) and filename.endswith('ImagingEvts.ds'):
+                            self.pnevt_list.append(os.path.join(root,filename))
+                            exists = True
+                if exists:    
+                    print(" > " + str(len(self.pnevt_list)) + " EPIC-pn event list found after running epproc.\n")
+                    for x in self.pnevt_list:
+                        print("    " + x + "\n")
+                    print("..... OK")
+                else:
+                    print("Something has gone wrong with epproc. I cant find any event list files after running. \n")
+        
+        if self.task == 'emproc':
+            # Check if emproc has already run. If it has, do not run again 
+            exists = False
+            self.m1evt_list = []
+            self.m2evt_list = []
+            for root, dirs, files in os.walk("."):  
+                for filename in files:
+                    if (filename.find('EMOS1') != -1) and filename.endswith('ImagingEvts.ds'):
+                        self.m1evt_list.append(os.path.join(root,filename))
+                        exists = True
+                    if (filename.find('EMOS2') != -1) and filename.endswith('ImagingEvts.ds'):
+                        self.m2evt_list.append(os.path.join(root,filename))
+                        exists = True
+            if exists and not self.rerun:    
+                print(" > " + str(len(self.m1evt_list)) + " EPIC-MOS1 event list found. Not running emproc again.\n")
+                for x in self.m1evt_list:
+                    print("    " + x + "\n")
+                print(" > " + str(len(self.m2evt_list)) + " EPIC-MOS2 event list found. Not running emproc again.\n")
+                for x in self.m2evt_list:
+                    print("    " + x + "\n")
+                print("..... OK")
+            else:
+                w(self.task,self.inargs).run()      # <<<<< Execute SAS task
+                exists = False 
+                self.m1evt_list = []
+                self.m2evt_list = []
+                for root, dirs, files in os.walk("."):  
+                    for filename in files:
+                        if (filename.find('EMOS1') != -1) and filename.endswith('ImagingEvts.ds'):
+                            self.m1evt_list.append(os.path.join(root,filename))
+                            exists = True 
+                        if (filename.find('EMOS2') != -1) and filename.endswith('ImagingEvts.ds'):
+                            self.m2evt_list.append(os.path.join(root,filename))
+                            exists = True            
+                if exists:    
+                    print(" > " + str(len(self.m1evt_list)) + " EPIC-MOS1 event list found after running emproc.\n")
+                    for x in self.m1evt_list:
+                        print("    " + x + "\n")
+                    print(" > " + str(len(self.m2evt_list)) + " EPIC-MOS2 event list found after running emproc.\n")
+                    for x in self.m2evt_list:
+                        print("    " + x + "\n")
+                    print("..... OK")
+                else:
+                    print("Something has gone wrong with emproc. I cant find any event list file. \n")
 
 def download_data(odfid,data_dir,level='ODF',encryption_key=None,repo='esa'):
     """

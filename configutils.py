@@ -194,6 +194,8 @@ if not sas_cfg.has_section("sas") and not on_sci_server:
 sas_dir     = sas_cfg.get("sas", "sas_dir")
 sas_ccfpath = sas_cfg.get("sas", "sas_ccfpath")
 
+# Checks if defaults have been changed.
+
 if sas_dir == "/does/not/exist" and not on_sci_server:
     logger.log('info', f'SAS_DIR not set. User must manually set SAS_DIR and initialize SAS.')
     print(f'SAS_DIR not set. User must manually set SAS_DIR and initialize SAS.')
@@ -201,6 +203,8 @@ if sas_dir == "/does/not/exist" and not on_sci_server:
 if sas_ccfpath == "/does/not/exist" and not on_sci_server:
     logger.log('info', f'SAS_CCFPATH not set. User must manually set SAS_CCFPATH and initialize SAS.')
     print(f'SAS_CCFPATH not set. User must manually set SAS_CCFPATH and initialize SAS.')
+
+# If defaults have been set then SAS will automatically be initialized.
 
 if os.path.exists(sas_dir) and os.path.exists(sas_ccfpath) and not on_sci_server:
     initializesas(sas_dir, sas_ccfpath)
@@ -233,11 +237,11 @@ def set_sas_config_default(option, value):
     value : number or string
         The value to set the option to.
     """
-    config_root = os.environ.get(
-        "XDG_CONFIG_HOME", os.path.join(os.path.expanduser("~"), ".config")
-        )
-    CONFIG_DIR = os.path.join(config_root, "sas")
-    CURRENT_CONFIG_FILE = os.path.join(CONFIG_DIR, "sas.cfg")
+    # config_root = os.environ.get(
+    #     "XDG_CONFIG_HOME", os.path.join(os.path.expanduser("~"), ".config")
+    #     )
+    # CONFIG_DIR = os.path.join(config_root, "sas")
+    # CURRENT_CONFIG_FILE = os.path.join(CONFIG_DIR, "sas.cfg")
     set_sas_config(option, value)
     with open(CURRENT_CONFIG_FILE, "w") as new_cfg:
         sas_cfg.write(new_cfg)
@@ -251,10 +255,10 @@ def clear_sas_defaults():
             verbosity
             suppress_warning
     """
-    config_root = os.environ.get(
-        "XDG_CONFIG_HOME", os.path.join(os.path.expanduser("~"), ".config")
-        )
-    CONFIG_DIR = os.path.join(config_root, "sas")
-    CURRENT_CONFIG_FILE = os.path.join(CONFIG_DIR, "sas.cfg")
+    # config_root = os.environ.get(
+    #     "XDG_CONFIG_HOME", os.path.join(os.path.expanduser("~"), ".config")
+    #     )
+    # CONFIG_DIR = os.path.join(config_root, "sas")
+    # CURRENT_CONFIG_FILE = os.path.join(CONFIG_DIR, "sas.cfg")
     os.remove(CURRENT_CONFIG_FILE)
 
