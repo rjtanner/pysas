@@ -29,7 +29,7 @@ import pysas
 obsid = '0802710101'
 
 # Create an odf object.
-odf = pysas.odfcontrol.ODF(obsid)
+odf = pysas.odfcontrol.ODFobject(obsid)
 
 # This will download the obsid and run cfibuild and odfingest.
-odf.setodf(obsid)
+odf.setodf()

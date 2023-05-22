@@ -36,11 +36,11 @@ if not pysas_dir in pythonpath:
 import pysas
 
 # Create an odf object.
-odf = pysas.odfcontrol.ODF(obsid)
+odf = pysas.odfcontrol.ODFobject(obsid)
 
 # Initialize SAS.
 odf.inisas(sas_dir, sas_ccfpath)
 
 # This will download the obsid and run cfibuild and odfingest.
-odf.setodf(obsid,data_dir=data_dir)
+odf.setodf(data_dir=data_dir)
 

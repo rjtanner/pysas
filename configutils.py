@@ -32,11 +32,8 @@ from configparser import ConfigParser
 # Third party imports
 
 # Local application imports
-from pysas.logger import TaskLogger as TL
 
 __version__ = 'configutils (configutils-0.1)'
-
-logger = TL('general_sas')
 
 # Function to initialize SAS
 
@@ -134,17 +131,25 @@ def initializesas(sas_dir, sas_ccfpath, verbosity = 4, suppress_warning = 1):
 
     sas_path = os.environ.get('SAS_PATH')
 
-    logger.log('info', f'SAS_DIR set to {sas_dir}')
-    logger.log('info', f'SAS_CCFPATH set to {sas_ccfpath}')
-    logger.log('info', f'SAS_PATH set to {sas_path}')
-    logger.log('info', f'{libpath} added to LIBRARY_PATH')
-    logger.log('info', f'{libpath} added to LD_LIBRARY_PATH')
-    logger.log('info', f'{perlpath} added to PERL5LIB')
-    logger.log('info', f'{pythonpath} added to PYTHONPATH')
+    return_info = f"""
+        SAS_DIR set to {sas_dir}
+        SAS_CCFPATH set to {sas_ccfpath}
+        SAS_PATH set to {sas_path}
+
+        {libpath} added to LIBRARY_PATH
+        {libpath} added to LD_LIBRARY_PATH
+        {perlpath} added to PERL5LIB
+        {pythonpath} added to PYTHONPATH
+    """
     if perllib:
-        logger.log('info', f'{perllib} added to PERLLIB')
-    logger.log('info', f'SAS_VERBOSITY set to {verbosity}')
-    logger.log('info', f'SAS_SUPPRESS_WARNING set to {suppress_warning}')
+        return_info += f"""{perllib} added to PERLLIB"""
+    return_info += f"""
+
+    SAS_VERBOSITY set to {verbosity}
+    SAS_SUPPRESS_WARNING set to {suppress_warning}
+    """
+
+    return return_info
 
 # Configuration
 
@@ -170,7 +175,6 @@ if not os.path.exists(CONFIG_DIR) and not on_sci_server:
     try:
         os.makedirs(CONFIG_DIR)
     except OSError:
-        logger.log('error', f'Unable to make SAS config directory: {CONFIG_DIR}')
         raise Exception( f'Unable to make SAS config directory: {CONFIG_DIR}')
 
 CURRENT_CONFIG_FILE = os.path.join(CONFIG_DIR, "sas.cfg")
@@ -182,7 +186,6 @@ if not os.path.exists(CURRENT_CONFIG_FILE) and not on_sci_server:
         with open(CURRENT_CONFIG_FILE, "w") as new_cfg:
             cp.write(new_cfg)
     except IOError:
-        logger.log('error', f'Unable to write to SAS config file: {CURRENT_CONFIG_FILE}')
         raise Exception( f'Unable to write to SAS config file: {CURRENT_CONFIG_FILE}')
 
 sas_cfg = ConfigParser(sas_cfg_defaults)
@@ -197,20 +200,17 @@ sas_ccfpath = sas_cfg.get("sas", "sas_ccfpath")
 # Checks if defaults have been changed.
 
 if sas_dir == "/does/not/exist" and not on_sci_server:
-    logger.log('info', f'SAS_DIR not set. User must manually set SAS_DIR and initialize SAS.')
     print(f'SAS_DIR not set. User must manually set SAS_DIR and initialize SAS.')
 
 if sas_ccfpath == "/does/not/exist" and not on_sci_server:
-    logger.log('info', f'SAS_CCFPATH not set. User must manually set SAS_CCFPATH and initialize SAS.')
     print(f'SAS_CCFPATH not set. User must manually set SAS_CCFPATH and initialize SAS.')
 
 # If defaults have been set then SAS will automatically be initialized.
 
 if os.path.exists(sas_dir) and os.path.exists(sas_ccfpath) and not on_sci_server:
     initializesas(sas_dir, sas_ccfpath)
-    logger.log('info', f'SAS_DIR and SAS_CCFPATH exist. Will use SAS_DIR and SAS_CCFPATH to initialize SAS.')
 else:
-    logger.log('info', f'There is a problem with either SAS_DIR or SAS_CCFPATH in the config file. Please set manually to initialize SAS.')
+    print(f'There is a problem with either SAS_DIR or SAS_CCFPATH in the config file. Please set manually to initialize SAS.')
 
 
 def set_sas_config(option, value):

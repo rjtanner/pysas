@@ -34,7 +34,7 @@ import os, sys, subprocess, shutil, glob, tarfile, gzip
 # Local application imports
 # from .version import VERSION, SAS_RELEASE, SAS_AKA
 from pysas.logger import TaskLogger as TL
-from pysas.configutils import initializesas, sas_cfg, logger
+from pysas.configutils import initializesas, sas_cfg
 from pysas.wrapper import Wrapper as w
 
 
@@ -42,7 +42,8 @@ from pysas.wrapper import Wrapper as w
 __version__ = 'odfcontrol (odfcontrol-0.1)'
 __all__ = ['_ODF', 'download_data']
 
-class ODF(object):
+
+class ODFobject(object):
     """
     Class for observation data files (ODF).
 
@@ -61,12 +62,8 @@ class ODF(object):
 
     """
 
-    def __init__(self,odfid,data_dir=None):
+    def __init__(self,odfid):
         self.odfid = odfid
-        self.data_dir = data_dir
-        data_dir = sas_cfg.get("sas", "data_dir")
-        if os.path.exists(data_dir):
-            self.data_dir = data_dir
 
     def inisas(self,sas_dir,sas_ccfpath,verbosity=4,suppress_warning=1):
         """
@@ -77,7 +74,10 @@ class ODF(object):
         self.verbosity = verbosity
         self.suppress_warning = suppress_warning
 
-        initializesas(self.sas_dir, self.sas_ccfpath, verbosity = self.verbosity, suppress_warning = self.suppress_warning)
+        return_info = initializesas(self.sas_dir, self.sas_ccfpath, 
+                                    verbosity = self.verbosity, 
+                                    suppress_warning = self.suppress_warning)
+        logger.log('info',return_info)
 
     def sastalk(self,verbosity=4,suppress_warning=1):
         """
@@ -90,7 +90,7 @@ class ODF(object):
         os.environ['SAS_VERBOSITY'] = '{}'.format(self.verbosity)
         os.environ['SAS_SUPPRESS_WARNING'] = '{}'.format(self.suppress_warning)
 
-    def setodf(self,odfid,data_dir=None,level='ODF',
+    def setodf(self,data_dir=None,level='ODF',
                sas_ccf=None,sas_odf=None,
                cifbuild_opts=None,odfingest_opts=None,
                encryption_key=None,overwrite=False,repo='esa'):
@@ -145,8 +145,38 @@ class ODF(object):
                                         'sciserver' (if user is on sciserver)
         """
 
-        self.odfid = odfid
-        self.data_dir = data_dir
+        # Where are we?
+        startdir = os.getcwd()
+
+        # Start checking data_dir
+        if data_dir == None:
+            data_dir = sas_cfg.get("sas", "data_dir")
+            if os.path.exists(data_dir):
+                self.data_dir = data_dir
+            else:
+                self.data_dir = startdir
+
+        # If data_dir was not given as an absolute path, it is interpreted
+        # as a subdirectory of startdir.
+        if self.data_dir[0] != '/':
+            self.data_dir = os.path.join(startdir, self.data_dir)
+        elif self.data_dir[:2] == './':
+            self.data_dir = os.path.join(startdir, self.data_dir[2:])
+
+        # Check if data_dir exists. If not then create it.
+        # Save comments for the logger created later.
+        logcomment = ''
+        if not os.path.isdir(self.data_dir):
+            logcomment = f'{self.data_dir} does not exist. Creating it!'
+            os.mkdir(self.data_dir)
+            logcomment = logcomment + '\n' + f'{self.data_dir} has been created!'
+
+        logger = generate_logger(logname='odf_'+self.odfid, log_dir=self.data_dir)
+        logger.log('info', f'Data directory = {self.data_dir}')
+        if len(logcomment) > 1:
+            logger.log('warning', logcomment)
+
+        # Deal with the rest of the inputs.
         self.level = level
         self.sas_ccf = sas_ccf
         self.sas_odf = sas_odf
@@ -177,32 +207,6 @@ class ODF(object):
             raise Exception('SAS_CCFPATH not set. Please define it.')
         else:
             logger.log('info',f'SAS_CCFPATH = {sasccfpath}')
-
-        # Where are we?
-        startdir = os.getcwd()
-        logger.log('info',f'setodf was initiated from {startdir}')
-
-        if self.data_dir == None:
-            data_dir = sas_cfg.get("sas", "data_dir")
-            if os.path.exists(data_dir):
-                self.data_dir = data_dir
-            else:
-                self.data_dir = startdir
-            
-        # If data_dir was not given as an absolute path, it is interpreted
-        # as a subdirectory of startdir
-        if self.data_dir[0] != '/':
-            self.data_dir = os.path.join(startdir, self.data_dir)
-        elif self.data_dir[:2] == './':
-            self.data_dir = os.path.join(startdir, self.data_dir[2:])
-        
-        logger.log('info', f'Data directory = {self.data_dir}')
-
-        # Check if data_dir exists. If not then create it.
-        if not os.path.isdir(self.data_dir):
-            logger.log('warning', f'{self.data_dir} does not exist. Creating it!')
-            os.mkdir(self.data_dir)
-            logger.log('info', f'{self.data_dir} has been created!')
         
         os.chdir(self.data_dir)
         logger.log('info', f'Changed directory to {self.data_dir}')
@@ -216,7 +220,7 @@ class ODF(object):
         ''')
 
         # Set directories for the observation, odf, pps, and work.
-        obs_dir  = os.path.join(self.data_dir,odfid)
+        obs_dir  = os.path.join(self.data_dir,self.odfid)
         odf_dir  = os.path.join(obs_dir,'ODF')
         work_dir = os.path.join(obs_dir,'work')
 
@@ -224,8 +228,8 @@ class ODF(object):
         # Default overwrite = False.
         if os.path.exists(obs_dir):
             if not overwrite:
-                logger.log('info', f'Existing directory for {odfid} found ...')
-                logger.log('info', f'Searching {data_dir}/{odfid} for ccf.cif and *SUM.SAS files ...')
+                logger.log('info', f'Existing directory for {self.odfid} found ...')
+                logger.log('info', f'Searching {self.data_dir}/{self.odfid} for ccf.cif and *SUM.SAS files ...')
 
                 # Looking for ccf.cif file.
                 if self.sas_ccf == None:
@@ -308,7 +312,8 @@ class ODF(object):
 
         # Function for downloading a single odfid set.
         download_data(self.odfid,self.data_dir,level=self.level,
-                      encryption_key=self.encryption_key,repo=self.repo)
+                      encryption_key=self.encryption_key,repo=self.repo,
+                      logger=logger)
 
         # If only PPS files were requested then setodf stops here.
         # Else will run cfibuild and odfingest.
@@ -517,7 +522,37 @@ class ODF(object):
                 else:
                     print("Something has gone wrong with emproc. I cant find any event list file. \n")
 
-def download_data(odfid,data_dir,level='ODF',encryption_key=None,repo='esa'):
+def generate_logger(logname=None,log_dir=None):
+    """
+    
+    """
+    if not logname:
+        logname = 'general_sas'
+
+    sastasklogdir = os.environ.get('SAS_TASKLOGDIR')
+
+    # Where are we?
+    startdir = os.getcwd()
+
+    # Check where the logger should go.
+    if log_dir:
+        sastasklogdir = log_dir
+
+    if not sastasklogdir:
+        sastasklogdir = startdir
+
+    if not os.path.isdir(sastasklogdir):
+        sastasklogdir = startdir
+
+    # This will put the log files in data_dir.
+    os.environ['SAS_TASKLOGDIR'] = sastasklogdir
+
+    # Create the logger
+    logger = TL(logname)
+
+    return logger
+
+def download_data(odfid,data_dir,level='ODF',encryption_key=None,repo='esa',logger=None):
     """
     Downloads, or copies, data from chosen repository. 
 
@@ -548,6 +583,9 @@ def download_data(odfid,data_dir,level='ODF',encryption_key=None,repo='esa'):
                                           'heasarc' (data from North America/NASA) or
                                           'sciserver' (if user is on sciserver)
     """
+
+    if not logger:
+        logger = generate_logger(logname=f'download_{odfid}',log_dir=data_dir)
 
     # Set directories for the observation, odf, and working
     obs_dir = os.path.join(data_dir,odfid)
@@ -627,6 +665,10 @@ def download_data(odfid,data_dir,level='ODF',encryption_key=None,repo='esa'):
         print(f'\nDownloading {odfid}, level {level}. Please wait ...\n')
         cmd = f'wget -m -nH -e robots=off --cut-dirs=4 -l 2 -np https://heasarc.gsfc.nasa.gov/FTP/xmm/data/rev0/{odfid}/{levl}'
         result = subprocess.run(cmd, shell=True)
+        if result.returncode != 0:
+            print(f'Problem downloading data!')
+            logger.log('error', f'File download failed!')
+            raise Exception('File download failed!')
         for path, directories, files in os.walk('.'):
             for file in files:
                 if 'index.html' in file:

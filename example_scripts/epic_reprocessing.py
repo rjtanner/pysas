@@ -26,8 +26,8 @@ import pysas
 
 obsid = '0802710101'
 
-odf = pysas.odfcontrol.ODF(obsid)
-odf.setodf(obsid,repo='heasarc')
+odf = pysas.odfcontrol.ODFobject(obsid)
+odf.setodf(repo='heasarc')
 
 import numpy as np
 import matplotlib.pyplot as plt

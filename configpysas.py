@@ -38,8 +38,7 @@ import os
 # Third party imports
 
 # Local application imports
-from pysas.logger import TaskLogger as TL
-from pysas.configutils import initializesas, sas_cfg, set_sas_config_default, logger
+from pysas.configutils import initializesas, sas_cfg, set_sas_config_default
 
 __version__ = 'configpysas (configpysas-0.1)'
 
@@ -79,7 +78,6 @@ outcomment="""
 print(outcomment)
 
 # Ask for SAS_DIR path
-logger.log('info', 'SAS_DIR not set. User must input SAS_DIR.')
 scomment = """
 
     SAS_DIR not set.
@@ -92,7 +90,6 @@ sas_dir = input('Full path to SAS: ')
 print('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
 # Ask for SAS_CCFPATH path
-logger.log('info', 'SAS_CCFPATH not set. User must input SAS_CCFPATH.')
 scomment = """
 
     SAS_CCFPATH not set.
@@ -105,7 +102,6 @@ sas_ccfpath = input('Full path to calibration files: ')
 print('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
 # Ask for data_dir path
-logger.log('info', 'Default data directory not set. User can set default data direcotry.\n')
 scomment = """
 
     No default data directory.
@@ -119,31 +115,31 @@ print('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Check if data_dir exists. If not then create it.
 if not os.path.isdir(data_dir):
-    logger.log('warning', f'{data_dir} does not exist. Creating it!')
+    print(f'{data_dir} does not exist. Creating it!')
     os.mkdir(data_dir)
-    logger.log('info', f'{data_dir} has been created!')
+    print(f'{data_dir} has been created!')
 else:
-    logger.log('info', f'Data directory exist. Will use {data_dir} to download data.')
+    print(f'Data directory exist. Will use {data_dir} to download data.')
 set_sas_config_default('data_dir',data_dir)
 
 # Check if paths for SAS_DIR and SAS_CCFPATH exist.
 if os.path.exists(sas_dir) and os.path.exists(sas_ccfpath):
-    logger.log('info', 'SAS_DIR and SAS_CCFPATH exist. Will use SAS_DIR and SAS_CCFPATH to initialize SAS.')
+    print('SAS_DIR and SAS_CCFPATH exist. Will use SAS_DIR and SAS_CCFPATH to initialize SAS.')
     set_sas_config_default('sas_dir',sas_dir)
     set_sas_config_default('sas_ccfpath',sas_ccfpath)
     initializesas(sas_dir, sas_ccfpath, verbosity=verbosity,suppress_warning=suppress_warning)
 else:
     if not os.path.exists(sas_dir):
-        logger.log('error', f'There is a problem with SAS_DIR {sas_dir}. Please check and try again.')
+        print(f'There is a problem with SAS_DIR {sas_dir}. Please check and try again.')
         raise Exception(f'There is a problem with SAS_DIR {sas_dir}. Please check and try again.')
     else:
-        logger.log('info', f'Default SAS_DIR = {sas_dir}')
+        print(f'Default SAS_DIR = {sas_dir}')
 
     if not os.path.exists(sas_ccfpath):
-        logger.log('error', f'There is a problem with SAS_CCFPATH {sas_ccfpath}. Please check and try again.')
+        print(f'There is a problem with SAS_CCFPATH {sas_ccfpath}. Please check and try again.')
         raise Exception(f'There is a problem with SAS_CCFPATH {sas_ccfpath}. Please check and try again.')
     else:
-        logger.log('info', f'Default SAS_CCFPATH = {sas_ccfpath}')
+        print(f'Default SAS_CCFPATH = {sas_ccfpath}')
 
 scomment = f"""
 
