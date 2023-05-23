@@ -28,15 +28,14 @@ obsid = '0802710101'
 
 odf = pysas.odfcontrol.ODFobject(obsid)
 odf.setodf(repo='heasarc')
+odf.runanalysis('epproc',[],rerun=False)
+odf.runanalysis('emproc',[],rerun=False)
 
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
 from astropy.table import Table
 from matplotlib.colors import LogNorm
-
-odf.runanalysis('epproc',[],rerun=False)
-odf.runanalysis('emproc',[],rerun=False)
 
 # For display purposes only, define a minimum filtering criteria for EPIC-pn
 

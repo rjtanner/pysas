@@ -64,6 +64,7 @@ class ODFobject(object):
 
     def __init__(self,odfid):
         self.odfid = odfid
+        self.files = {}
 
     def inisas(self,sas_dir,sas_ccfpath,verbosity=4,suppress_warning=1):
         """
@@ -178,8 +179,8 @@ class ODFobject(object):
 
         # Deal with the rest of the inputs.
         self.level = level
-        self.sas_ccf = sas_ccf
-        self.sas_odf = sas_odf
+        self.files['sas_ccf'] = sas_ccf
+        self.files['sas_odf'] = sas_odf
         self.cifbuild_opts = cifbuild_opts
         self.odfingest_opts = odfingest_opts
         self.encryption_key = encryption_key
@@ -232,48 +233,48 @@ class ODFobject(object):
                 logger.log('info', f'Searching {self.data_dir}/{self.odfid} for ccf.cif and *SUM.SAS files ...')
 
                 # Looking for ccf.cif file.
-                if self.sas_ccf == None:
+                if self.files['sas_ccf'] == None:
                     logger.log('info', f'Path to ccf.cif file not given. Will search for it.')
                     for path, directories, files in os.walk(obs_dir):
                         for file in files:
                             if 'ccf.cif' in file:
                                 logger.log('info', f'Found ccf.cif file in {path}.')
-                                self.sas_ccf = os.path.join(path,file)
+                                self.files['sas_ccf'] = os.path.join(path,file)
                 else:
                     # Check if ccf.cif file exists.
                     try:
-                        os.path.exists(self.sas_ccf)
-                        logger.log('info', f'{self.sas_ccf} is present')
+                        os.path.exists(self.files['sas_ccf'])
+                        logger.log('info', '{0} is present'.format(self.files['sas_ccf']))
                     except FileExistsError:
-                        logger.log('error', f'File {self.sas_ccf} not present! Please check if path is correct!')
-                        print(f'File {self.sas_ccf} not present! Please check if path is correct!')
+                        logger.log('error', 'File {0} not present! Please check if path is correct!'.format(self.files['sas_ccf']))
+                        print('File {0} not present! Please check if path is correct!'.format(self.files['sas_ccf']))
                         sys.exit(1)
 
                 # Set 'SAS_CCF' enviroment variable.
-                os.environ['SAS_CCF'] = self.sas_ccf
-                logger.log('info', f'SAS_CCF = {self.sas_ccf}')
-                print(f'SAS_CCF = {self.sas_ccf}')
+                os.environ['SAS_CCF'] = self.files['sas_ccf']
+                logger.log('info', 'SAS_CCF = {0}'.format(self.files['sas_ccf']))
+                print(f'SAS_CCF = {0}'.format(self.files['sas_ccf']))
 
                 # Looking for *SUM.SAS file.
-                if self.sas_odf == None:
+                if self.files['sas_odf'] == None:
                     logger.log('info', f'Path to *SUM.SAS file not given. Will search for it.')
                     for path, directories, files in os.walk(obs_dir):
                         for file in files:
                             if 'SUM.SAS' in file:
                                 logger.log('info', f'Found *SUM.SAS file in {path}.')
-                                self.sas_odf = os.path.join(path,file)
+                                self.files['sas_odf'] = os.path.join(path,file)
                 else:
                     # Check if *SUM.SAS file exists.
                     try:
-                        os.path.exists(self.sas_odf)
-                        logger.log('info', f'{self.sas_odf} is present')
+                        os.path.exists(self.files['sas_odf'])
+                        logger.log('info', '{0} is present'.format(self.files['sas_ccf']))
                     except FileExistsError:
-                        logger.log('error', f'File {self.sas_odf} not present! Please check if path is correct!')
-                        print(f'File {self.sas_odf} not present! Please check if path is correct!')
+                        logger.log('error', 'File {0} not present! Please check if path is correct!'.format(self.files['sas_ccf']))
+                        print('File {0} not present! Please check if path is correct!'.format(self.files['sas_ccf']))
                         sys.exit(1)
                 
                 # Check that the SUM.SAS file PATH keyword points to a real ODF directory
-                with open(self.sas_odf) as inf:
+                with open(self.files['sas_odf']) as inf:
                     lines = inf.readlines()
                 for line in lines:
                     if 'PATH' in line:
@@ -287,9 +288,9 @@ class ODFobject(object):
                             raise Exception(f'\nMissing {MANIFEST[0]} file in {path}. Missing ODF components?')
                 
                 # Set 'SAS_ODF' enviroment variable.
-                os.environ['SAS_ODF'] = self.sas_odf
-                logger.log('info', f'SAS_ODF = {self.sas_odf}')
-                print(f'SAS_ODF = {self.sas_odf}')
+                os.environ['SAS_ODF'] = self.files['sas_odf']
+                logger.log('info', 'SAS_ODF = {0}'.format(self.files['sas_ccf']))
+                print('SAS_ODF = {0}'.format(self.files['sas_ccf']))
 
                 if not os.path.exists(work_dir): os.mkdir(work_dir)
                 # Exit the setodf function. Everything is set.
@@ -437,7 +438,19 @@ class ODFobject(object):
 
     def runanalysis(self,task,inargs,rerun=False):
         """
-        
+        A wrapper for the wrapper. Yes. I know.
+
+        For certain SAS tasks it will check if the related files are already
+        present. If they are, it will not run again, unless "rerun=True". For 
+        all other tasks it will simply call the standard pySAS wrapper.
+
+        Lists of output files are stored in the dictionary self.files{}.
+
+        SAS Tasks that it currently works for:
+            --epproc
+            --emproc
+
+        More will be added as needed.
         """
         self.task = task
         self.inargs = inargs
@@ -449,78 +462,80 @@ class ODFobject(object):
         if self.task == 'epproc':
             # Check if epproc has already run. If it has, do not run again 
             exists = False
-            self.pnevt_list = []
+            self.files['pnevt_list'] = []
             for root, dirs, files in os.walk("."):  
                 for filename in files:
                     if (filename.find('EPN') != -1) and filename.endswith('ImagingEvts.ds'):
-                        self.pnevt_list.append(os.path.join(root,filename))
+                        self.files['pnevt_list'].append(os.path.join(root,filename))
                         exists = True
             if exists and not self.rerun:    
-                print(" > " + str(len(self.pnevt_list)) + " EPIC-pn event list found. Not running epproc again.\n")
-                for x in self.pnevt_list:
+                print(" > " + str(len(self.files['pnevt_list'])) + " EPIC-pn event list found. Not running epproc again.\n")
+                for x in self.files['pnevt_list']:
                     print("    " + x + "\n")
                 print("..... OK")
             else:
                 w(self.task,self.inargs).run()      # <<<<< Execute SAS task
                 exists = False
-                self.pnevt_list = []
+                self.files['pnevt_list'] = []
                 for root, dirs, files in os.walk("."):  
                     for filename in files:
                         if (filename.find('EPN') != -1) and filename.endswith('ImagingEvts.ds'):
-                            self.pnevt_list.append(os.path.join(root,filename))
+                            self.files['pnevt_list'].append(os.path.join(root,filename))
                             exists = True
                 if exists:    
-                    print(" > " + str(len(self.pnevt_list)) + " EPIC-pn event list found after running epproc.\n")
-                    for x in self.pnevt_list:
+                    print(" > " + str(len(self.files['pnevt_list'])) + " EPIC-pn event list found after running epproc.\n")
+                    for x in self.files['pnevt_list']:
                         print("    " + x + "\n")
                     print("..... OK")
                 else:
                     print("Something has gone wrong with epproc. I cant find any event list files after running. \n")
         
-        if self.task == 'emproc':
+        elif self.task == 'emproc':
             # Check if emproc has already run. If it has, do not run again 
             exists = False
-            self.m1evt_list = []
-            self.m2evt_list = []
+            self.files['m1evt_list'] = []
+            self.files['m2evt_list'] = []
             for root, dirs, files in os.walk("."):  
                 for filename in files:
                     if (filename.find('EMOS1') != -1) and filename.endswith('ImagingEvts.ds'):
-                        self.m1evt_list.append(os.path.join(root,filename))
+                        self.files['m1evt_list'].append(os.path.join(root,filename))
                         exists = True
                     if (filename.find('EMOS2') != -1) and filename.endswith('ImagingEvts.ds'):
-                        self.m2evt_list.append(os.path.join(root,filename))
+                        self.files['m2evt_list'].append(os.path.join(root,filename))
                         exists = True
             if exists and not self.rerun:    
-                print(" > " + str(len(self.m1evt_list)) + " EPIC-MOS1 event list found. Not running emproc again.\n")
-                for x in self.m1evt_list:
+                print(" > " + str(len(self.files['m1evt_list'])) + " EPIC-MOS1 event list found. Not running emproc again.\n")
+                for x in self.files['m1evt_list']:
                     print("    " + x + "\n")
-                print(" > " + str(len(self.m2evt_list)) + " EPIC-MOS2 event list found. Not running emproc again.\n")
-                for x in self.m2evt_list:
+                print(" > " + str(len(self.files['m2evt_list'])) + " EPIC-MOS2 event list found. Not running emproc again.\n")
+                for x in self.files['m2evt_list']:
                     print("    " + x + "\n")
                 print("..... OK")
             else:
                 w(self.task,self.inargs).run()      # <<<<< Execute SAS task
                 exists = False 
-                self.m1evt_list = []
-                self.m2evt_list = []
+                self.files['m1evt_list'] = []
+                self.files['m2evt_list'] = []
                 for root, dirs, files in os.walk("."):  
                     for filename in files:
                         if (filename.find('EMOS1') != -1) and filename.endswith('ImagingEvts.ds'):
-                            self.m1evt_list.append(os.path.join(root,filename))
+                            self.files['m1evt_list'].append(os.path.join(root,filename))
                             exists = True 
                         if (filename.find('EMOS2') != -1) and filename.endswith('ImagingEvts.ds'):
-                            self.m2evt_list.append(os.path.join(root,filename))
+                            self.files['m2evt_list'].append(os.path.join(root,filename))
                             exists = True            
                 if exists:    
-                    print(" > " + str(len(self.m1evt_list)) + " EPIC-MOS1 event list found after running emproc.\n")
-                    for x in self.m1evt_list:
+                    print(" > " + str(len(self.files['m1evt_list'])) + " EPIC-MOS1 event list found after running emproc.\n")
+                    for x in self.files['m1evt_list']:
                         print("    " + x + "\n")
-                    print(" > " + str(len(self.m2evt_list)) + " EPIC-MOS2 event list found after running emproc.\n")
-                    for x in self.m2evt_list:
+                    print(" > " + str(len(self.files['m2evt_list'])) + " EPIC-MOS2 event list found after running emproc.\n")
+                    for x in self.files['m2evt_list']:
                         print("    " + x + "\n")
                     print("..... OK")
                 else:
                     print("Something has gone wrong with emproc. I cant find any event list file. \n")
+        else:
+            w(self.task,self.inargs).run()      # <<<<< Execute SAS task
 
 def generate_logger(logname=None,log_dir=None):
     """
@@ -591,7 +606,6 @@ def download_data(odfid,data_dir,level='ODF',encryption_key=None,repo='esa',logg
     obs_dir = os.path.join(data_dir,odfid)
     odf_dir = os.path.join(obs_dir,'ODF')
     pps_dir = os.path.join(obs_dir,'PPS')
-    work_dir = os.path.join(obs_dir,'working')
 
     # Checks if obs_dir exists. Removes it.
     if os.path.exists(obs_dir):
@@ -604,9 +618,6 @@ def download_data(odfid,data_dir,level='ODF',encryption_key=None,repo='esa',logg
     logger.log('info', f'Creating observation directory {obs_dir} ...')
     print(f'\nCreating observation directory {obs_dir} ...')
     os.mkdir(obs_dir)
-    logger.log('info', f'Creating work directory {work_dir} ...')
-    print(f'Creating work directory {work_dir} ...')
-    os.mkdir(work_dir)
 
     logger.log('info', 'Requesting odfid = {} from XMM-Newton Science Archive\n'.format(odfid))
     print('Requesting odfid = {} from XMM-Newton Science Archive\n'.format(odfid))

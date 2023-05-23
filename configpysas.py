@@ -77,21 +77,30 @@ outcomment="""
 
 print(outcomment)
 
-# Ask for SAS_DIR path
-scomment = """
+script_path = path = os.path.normpath(os.path.abspath(__file__))
+split_path = path.split(os.sep)
 
-    SAS_DIR not set.
+if split_path[-2] == 'pysas' and split_path[-3] == 'python' and split_path[-4] == 'lib' and split_path[-5][0:7] == 'xmmsas_':
+    psas_dir = os.sep
+    for folder in split_path[:-4]:
+        psas_dir = os.path.join(psas_dir,folder)
+    print('Is this the correct SAS directory?')
+    print('\n    {0}\n'.format(psas_dir))
+    response = input('y/n: ')
+    response = response.lower()
+    if response == 'y' or 'yes' or 'ye' or 'yeah' or 'yea':
+        sas_dir = psas_dir
+        print(f'Setting SAS_DIR = {sas_dir}')
+else:
+    # Ask for SAS_DIR path
+    scomment = '\nPlease provide the full path to the SAS install directory (SAS_DIR).\n'
+    print(scomment)
+    sas_dir = input('Full path to SAS: ')
 
-    Please provide the full path to the SAS install directory (SAS_DIR).
-
-"""
-print(scomment)
-sas_dir = input('Full path to SAS: ')
 print('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
 # Ask for SAS_CCFPATH path
 scomment = """
-
     SAS_CCFPATH not set.
 
     Please provide the full path to the SAS calibration directory (SAS_CCFPATH).
@@ -103,7 +112,6 @@ print('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Ask for data_dir path
 scomment = """
-
     No default data directory.
 
     Please provide the full path to the user data directory (OPTIONAL).
@@ -119,7 +127,7 @@ if not os.path.isdir(data_dir):
     os.mkdir(data_dir)
     print(f'{data_dir} has been created!')
 else:
-    print(f'Data directory exist. Will use {data_dir} to download data.')
+    print(f'\nData directory exist. Will use {data_dir} to download data.')
 set_sas_config_default('data_dir',data_dir)
 
 # Check if paths for SAS_DIR and SAS_CCFPATH exist.
@@ -142,7 +150,6 @@ else:
         print(f'Default SAS_CCFPATH = {sas_ccfpath}')
 
 scomment = f"""
-
     Success!
 
     SAS_DIR set to {sas_dir}
