@@ -156,6 +156,8 @@ class ODFobject(object):
                 self.data_dir = data_dir
             else:
                 self.data_dir = startdir
+        else:
+            self.data_dir = data_dir
 
         # If data_dir was not given as an absolute path, it is interpreted
         # as a subdirectory of startdir.
