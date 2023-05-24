@@ -194,8 +194,9 @@ if not on_sci_server:
 if not sas_cfg.has_section("sas") and not on_sci_server:
     sas_cfg.add_section("sas")
 
-sas_dir     = sas_cfg.get("sas", "sas_dir")
-sas_ccfpath = sas_cfg.get("sas", "sas_ccfpath")
+if not on_sci_server:
+    sas_dir     = sas_cfg.get("sas", "sas_dir")
+    sas_ccfpath = sas_cfg.get("sas", "sas_ccfpath")
 
 # Checks if defaults work.
 
