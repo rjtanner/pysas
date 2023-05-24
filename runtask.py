@@ -50,7 +50,7 @@ class RunTask:
     
     """
 
-    def __init__(self, taskname, iparsdic,logFile,stdout_to_console=True):
+    def __init__(self, taskname, iparsdic,logFile,stdout_to_console):
         self.taskname = taskname
         self.iparsdic = iparsdic
         self.logFile = logFile

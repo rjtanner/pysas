@@ -168,11 +168,12 @@ class MyTask(SASTask):
     they can be used in the ' runtask' instance method.
     """
 
-    def __init__(self, taskname, inargs,logFile='DEFAULT'):
+    def __init__(self, taskname, inargs, logFile='DEFAULT',stdout_to_console=True):
         super().__init__(taskname, inargs)
         self.taskname = taskname
         self.inargs = inargs
         self.logFile = logFile
+        self.stdout_to_console = stdout_to_console
 
         # Reorder self.inargs to group together all options and 
         # all args of type param=value, in that order.
@@ -326,7 +327,7 @@ class MyTask(SASTask):
     def runtask(self):
         if self.Exit:
             return self.Exit
-        r = RunTask(self.taskname, self.iparsdic,self.logFile)
+        r = RunTask(self.taskname, self.iparsdic,self.logFile,self.stdout_to_console)
         r.run()
 
     def printHelp(self):
