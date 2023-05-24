@@ -459,6 +459,15 @@ class ODFobject(object):
         self.rerun = rerun
         self.logFile = logFile
 
+        # Make sure we are in the right place!
+        obs_dir = os.path.join(self.data_dir,self.odfid)
+        if os.path.isdir(obs_dir):
+            os.chdir(os.path.join(self.data_dir,self.odfid))
+        else:
+            print(f'The directory for the observation ID ({self.odfid}) does not seem to exist!\n    {obs_dir}')
+            print('Has \'setodf\' been run?')
+            raise Exception(f'Problem with the directory for odfID = {self.odfid}!')
+
         print(f"   SAS command to be executed: {self.task}, with arguments; \n{self.inargs}")
         print(f"Running {self.task} ..... \n")
 

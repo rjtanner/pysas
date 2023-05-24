@@ -34,8 +34,7 @@ odf = pysas.odfcontrol.ODFobject(obsid)
 odf.basic_setup(repo='heasarc')
 
 # Method 2: Explicitly laid out
-# odf.setodf(encryption_key=encryption_key,
-#            overwrite=False,repo='heasarc')
+# odf.setodf(overwrite=False,repo='heasarc')
 # odf.runanalysis('epproc',[],rerun=False)
 # odf.runanalysis('emproc',[],rerun=False)
 
