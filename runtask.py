@@ -33,14 +33,11 @@ run function defined there.
 
 # Standard library imports
 from importlib import import_module
-import pkgutil
-import os
-import subprocess
+import pkgutil, os, sys, subprocess
 
 # Third party imports
 
 # Local application imports
-
 
 
 class RunTask:
@@ -53,10 +50,11 @@ class RunTask:
     
     """
 
-    def __init__(self, taskname, iparsdic,logFile):
+    def __init__(self, taskname, iparsdic,logFile,stdout_to_console=True):
         self.taskname = taskname
         self.iparsdic = iparsdic
         self.logFile = logFile
+        self.stdout_to_console = stdout_to_console
 
     def run(self):
         """"Method run
@@ -130,20 +128,22 @@ class RunTask:
                                       stderr=subprocess.STDOUT,
                                       universal_newlines=True) as p:
                     for line in p.stdout:
-                        print(line, end='')
+                        if self.stdout_to_console:
+                            print(line, end='')
             else:
                 self.stdoutFile=open(self.logFile,'w')
                 p = subprocess.Popen(cmd, 
                                      bufsize=1,
                                      shell=True,
                                      text=True,
-                                     stdout=self.stdoutFile,
+                                     stdout=subprocess.PIPE,
                                      stderr=subprocess.STDOUT,
-                                     universal_newlines=True)                              
-                p.wait()
-
-            #for line in p.stdout:
-            #    print(line, end='')                 
+                                     universal_newlines=True)
+                for line in p.stdout:
+                    if self.stdout_to_console:
+                        sys.stdout.write(line)
+                    self.stdoutFile.write(line)
+                p.wait()                   
             
             if p.returncode != 0:
                 if self.logFile != 'DEFAULT':

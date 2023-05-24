@@ -78,7 +78,7 @@ class ODFobject(object):
         return_info = initializesas(self.sas_dir, self.sas_ccfpath, 
                                     verbosity = self.verbosity, 
                                     suppress_warning = self.suppress_warning)
-        logger.log('info',return_info)
+        print(return_info)
 
     def sastalk(self,verbosity=4,suppress_warning=1):
         """
@@ -362,6 +362,7 @@ class ODFobject(object):
                 logger.log('info', f'Running cifbuild...')
                 print(f'\nRunning cifbuild...')
             
+            ##### Running cfibuild
             rc = subprocess.run(cmd)
             if rc.returncode != 0:
                 logger.log('error', 'cifbuild failed to complete')
@@ -395,6 +396,7 @@ class ODFobject(object):
                 logger.log('info','Running odfingest...') 
                 print('\nRunning odfingest...')
             
+            ##### Running odfingest
             rc = subprocess.run(cmd)
             if rc.returncode != 0:
                 logger.log('error', 'odfingest failed to complete')
@@ -436,7 +438,7 @@ class ODFobject(object):
             SAS_ODF = {fullsumsas}
             \n''')
 
-    def runanalysis(self,task,inargs,rerun=False):
+    def runanalysis(self,task,inargs,rerun=False,logFile='DEFAULT'):
         """
         A wrapper for the wrapper. Yes. I know.
 
@@ -455,6 +457,7 @@ class ODFobject(object):
         self.task = task
         self.inargs = inargs
         self.rerun = rerun
+        self.logFile = logFile
 
         print(f"   SAS command to be executed: {self.task}, with arguments; \n{self.inargs}")
         print(f"Running {self.task} ..... \n")
@@ -474,7 +477,7 @@ class ODFobject(object):
                     print("    " + x + "\n")
                 print("..... OK")
             else:
-                w(self.task,self.inargs).run()      # <<<<< Execute SAS task
+                w(self.task,self.inargs,logFile=self.logFile).run()      # <<<<< Execute SAS task
                 exists = False
                 self.files['pnevt_list'] = []
                 for root, dirs, files in os.walk("."):  
@@ -512,7 +515,7 @@ class ODFobject(object):
                     print("    " + x + "\n")
                 print("..... OK")
             else:
-                w(self.task,self.inargs).run()      # <<<<< Execute SAS task
+                w(self.task,self.inargs,logFile=self.logFile).run()      # <<<<< Execute SAS task
                 exists = False 
                 self.files['m1evt_list'] = []
                 self.files['m2evt_list'] = []
@@ -536,6 +539,38 @@ class ODFobject(object):
                     print("Something has gone wrong with emproc. I cant find any event list file. \n")
         else:
             w(self.task,self.inargs).run()      # <<<<< Execute SAS task
+
+    def basic_setup(self, **kwargs):
+        """
+        Function to do all basic analysis tasks. The function will:
+
+            1. Call the function 'setodf'
+                A. Download data
+                B. Run 'cfibuild'
+                C. Run 'odfingest'
+            2. Run 'epproc'
+            3. Run 'emproc'
+        """
+
+        self.setodf(data_dir       = kwargs.get('data_dir', None),
+                    level          = kwargs.get('level', 'ODF'),
+                    sas_ccf        = kwargs.get('sas_ccf', None),
+                    sas_odf        = kwargs.get('sas_odf', None),
+                    cifbuild_opts  = kwargs.get('cifbuild_opts', None),
+                    odfingest_opts = kwargs.get('odfingest_opts', None),
+                    encryption_key = kwargs.get('encryption_key', None),
+                    overwrite      = kwargs.get('overwrite', False),
+                    repo           = kwargs.get('repo', 'esa'))
+        
+        self.runanalysis('epproc',
+                         kwargs.get('epproc_inargs', []),
+                         rerun = kwargs.get('rerun', False),
+                         logFile=kwargs.get('logFile', 'epproc.log'))
+        
+        self.runanalysis('emproc',
+                         kwargs.get('emproc_inargs', []),
+                         rerun = kwargs.get('rerun', False),
+                         logFile=kwargs.get('logFile', 'emproc.log'))
 
 def generate_logger(logname=None,log_dir=None):
     """

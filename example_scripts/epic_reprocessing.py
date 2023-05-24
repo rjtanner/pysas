@@ -27,9 +27,19 @@ import pysas
 obsid = '0802710101'
 
 odf = pysas.odfcontrol.ODFobject(obsid)
-odf.setodf(repo='heasarc')
-odf.runanalysis('epproc',[],rerun=False)
-odf.runanalysis('emproc',[],rerun=False)
+
+###################### Two ways of doing the same thing. ######################
+
+# Method 1: All in 1
+odf.basic_setup(repo='heasarc')
+
+# Method 2: Explicitly laid out
+# odf.setodf(encryption_key=encryption_key,
+#            overwrite=False,repo='heasarc')
+# odf.runanalysis('epproc',[],rerun=False)
+# odf.runanalysis('emproc',[],rerun=False)
+
+###############################################################################
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -51,7 +61,7 @@ mos_pi_min    = 300.    # Low energy range eV
 mos_pi_max    = 20000.  # High energy range eV
 mos_flag      = 0       # FLAG
 
-plt.figure(figsize=(15,20))
+plt.figure(figsize=(15,60))
 
 pl=1
 

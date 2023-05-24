@@ -37,13 +37,14 @@ class Wrapper:
     Method run instantiates MyTask to read the parameter file,
     process the input arguments and run the task.
     """
-    def __init__(self, taskname, inargs,logFile='DEFAULT'):
+    def __init__(self, taskname, inargs, logFile='DEFAULT', stdout_to_console=True):
         self.taskname = taskname
         self.inargs = inargs
         self.logFile = logFile
+        self.stdout_to_console = stdout_to_console
 
     def run(self):
-        t = MyTask(self.taskname, self.inargs,self.logFile)
+        t = MyTask(self.taskname, self.inargs, self.logFile, self.stdout_to_console)
         t.readparfile()
         t.processargs()
         t.runtask()

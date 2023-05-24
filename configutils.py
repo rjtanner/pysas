@@ -197,22 +197,15 @@ if not sas_cfg.has_section("sas") and not on_sci_server:
 sas_dir     = sas_cfg.get("sas", "sas_dir")
 sas_ccfpath = sas_cfg.get("sas", "sas_ccfpath")
 
-# Checks if defaults have been changed.
-
-# if sas_dir == "/does/not/exist" and not on_sci_server:
-#     print(f'SAS_DIR not set. User must manually set SAS_DIR and initialize SAS.')
-
-# if sas_ccfpath == "/does/not/exist" and not on_sci_server:
-#     print(f'SAS_CCFPATH not set. User must manually set SAS_CCFPATH and initialize SAS.')
-
-# If defaults have been set then SAS will automatically be initialized.
+# Checks if defaults work.
 
 if os.path.exists(sas_dir) and os.path.exists(sas_ccfpath) and not on_sci_server:
     initializesas(sas_dir, sas_ccfpath)
 elif not on_sci_server and sas_dir != '/does/not/exist' and sas_ccfpath != '/does/not/exist':
     print(f'There is a problem with either SAS_DIR or SAS_CCFPATH in the config file. Please set manually to initialize SAS.')
 
-# Functions
+######### Functions #########
+
 def set_sas_config(option, value):
     """
     Set SAS configuration values.
