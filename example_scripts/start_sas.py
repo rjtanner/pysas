@@ -31,5 +31,5 @@ obsid = '0802710101'
 # Create an odf object.
 odf = pysas.odfcontrol.ODFobject(obsid)
 
-# This will download the obsid and run cfibuild and odfingest.
-odf.setodf()
+# This will download the obsid and run cfibuild, odfingest, epproc, and emproc.
+odf.basic_setup(repo='heasarc')

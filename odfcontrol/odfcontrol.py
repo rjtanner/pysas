@@ -53,7 +53,7 @@ class ODFobject(object):
 
         Data is organized as:
             data_dir = /path/to/data/
-            odf_data_dir = /path/to/data/odfid/
+            obs_dir = /path/to/data/odfid/
         With subdirectories and files:
                 odf_dir  = /path/to/data/odfid/ODF/
                 work_dir = /path/to/data/odfid/work/
@@ -223,13 +223,13 @@ class ODFobject(object):
         ''')
 
         # Set directories for the observation, odf, pps, and work.
-        obs_dir  = os.path.join(self.data_dir,self.odfid)
-        odf_dir  = os.path.join(obs_dir,'ODF')
-        work_dir = os.path.join(obs_dir,'work')
+        self.obs_dir  = os.path.join(self.data_dir,self.odfid)
+        self.odf_dir  = os.path.join(self.obs_dir,'ODF')
+        self.work_dir = os.path.join(self.obs_dir,'work')
 
         # Checks if obs_dir exists. Removes it if overwrite = True.
         # Default overwrite = False.
-        if os.path.exists(obs_dir):
+        if os.path.exists(self.obs_dir):
             if not overwrite:
                 logger.log('info', f'Existing directory for {self.odfid} found ...')
                 logger.log('info', f'Searching {self.data_dir}/{self.odfid} for ccf.cif and *SUM.SAS files ...')
@@ -237,7 +237,7 @@ class ODFobject(object):
                 # Looking for ccf.cif file.
                 if self.files['sas_ccf'] == None:
                     logger.log('info', f'Path to ccf.cif file not given. Will search for it.')
-                    for path, directories, files in os.walk(obs_dir):
+                    for path, directories, files in os.walk(self.obs_dir):
                         for file in files:
                             if 'ccf.cif' in file:
                                 logger.log('info', f'Found ccf.cif file in {path}.')
@@ -260,7 +260,7 @@ class ODFobject(object):
                 # Looking for *SUM.SAS file.
                 if self.files['sas_odf'] == None:
                     logger.log('info', f'Path to *SUM.SAS file not given. Will search for it.')
-                    for path, directories, files in os.walk(obs_dir):
+                    for path, directories, files in os.walk(self.obs_dir):
                         for file in files:
                             if 'SUM.SAS' in file:
                                 logger.log('info', f'Found *SUM.SAS file in {path}.')
@@ -294,14 +294,14 @@ class ODFobject(object):
                 logger.log('info', 'SAS_ODF = {0}'.format(self.files['sas_ccf']))
                 print('SAS_ODF = {0}'.format(self.files['sas_ccf']))
 
-                if not os.path.exists(work_dir): os.mkdir(work_dir)
+                if not os.path.exists(self.work_dir): os.mkdir(self.work_dir)
                 # Exit the setodf function. Everything is set.
                 return
             else:
                 # If obs_dir exists and overwrite = True then remove obs_dir.
-                logger.log('info', f'Removing existing directory {obs_dir} ...')
-                print(f'\n\nRemoving existing directory {obs_dir} ...')
-                shutil.rmtree(obs_dir)
+                logger.log('info', f'Removing existing directory {self.obs_dir} ...')
+                print(f'\n\nRemoving existing directory {self.obs_dir} ...')
+                shutil.rmtree(self.obs_dir)
 
         # Start fresh with new download.
         # Identify the download level.
@@ -329,8 +329,8 @@ class ODFobject(object):
             print(f'\nPPS products can be found in {ppsdir}\n\nLink to Observation Summary html: {ppssumhtmllink}')
         else:
             # Run cfibuild and odfingest on the new data.
-            os.chdir(odf_dir)
-            logger.log('info', f'Changed directory to {odf_dir}')
+            os.chdir(self.odf_dir)
+            logger.log('info', f'Changed directory to {self.odf_dir}')
 
             # Checks that the MANIFEST file is there
             MANIFEST = glob.glob('MANIFEST*')
@@ -344,13 +344,13 @@ class ODFobject(object):
 
             # Here the ODF is fully untarred below odfid subdirectory
             # Now we start preparing the SAS_ODF and SAS_CCF
-            logger.log('info', f'Setting SAS_ODF = {odf_dir}')
-            print(f'\nSetting SAS_ODF = {odf_dir}')
-            os.environ['SAS_ODF'] = odf_dir
+            logger.log('info', f'Setting SAS_ODF = {self.odf_dir}')
+            print(f'\nSetting SAS_ODF = {self.odf_dir}')
+            os.environ['SAS_ODF'] = self.odf_dir
 
             # Change to working directory
-            if not os.path.exists(work_dir): os.mkdir(work_dir)
-            os.chdir(work_dir)
+            if not os.path.exists(self.work_dir): os.mkdir(self.work_dir)
+            os.chdir(self.work_dir)
 
             # Run cifbuild
             if cifbuild_opts:
@@ -381,7 +381,7 @@ class ODFobject(object):
                 sys.exit(1)
             
             # Sets SAS_CCF variable
-            fullccfcif = os.path.join(work_dir, 'ccf.cif')
+            fullccfcif = os.path.join(self.work_dir, 'ccf.cif')
             logger.log('info', f'Setting SAS_CCF = {fullccfcif}')
             print(f'\nSetting SAS_CCF = {fullccfcif}')
             os.environ['SAS_CCF'] = fullccfcif
@@ -417,7 +417,7 @@ class ODFobject(object):
                 sys.exit(1)
             
             # Set the SAS_ODF to the SUM.SAS file
-            fullsumsas = os.path.join(work_dir, sumsas[0])
+            fullsumsas = os.path.join(self.work_dir, sumsas[0])
             os.environ['SAS_ODF'] = fullsumsas
             logger.log('info', f'Setting SAS_ODF = {fullsumsas}')
             print(f'\nSetting SAS_ODF = {fullsumsas}')
@@ -428,12 +428,12 @@ class ODFobject(object):
             for line in lines:
                 if 'PATH' in line:
                     key, path = line.split()
-                    if path != odf_dir:
-                        logger.log('error', f'SAS summary file PATH {path} mismatchs {odf_dir}')
-                        raise Exception(f'SAS summary file PATH {path} mismatchs {odf_dir}')
+                    if path != self.odf_dir:
+                        logger.log('error', f'SAS summary file PATH {path} mismatchs {self.odf_dir}')
+                        raise Exception(f'SAS summary file PATH {path} mismatchs {self.odf_dir}')
                     else:
-                        logger.log('info', f'Summary file PATH keyword matches {odf_dir}')
-                        print(f'\nWarning: Summary file PATH keyword matches {odf_dir}')
+                        logger.log('info', f'Summary file PATH keyword matches {self.odf_dir}')
+                        print(f'\nWarning: Summary file PATH keyword matches {self.odf_dir}')
 
             print(f'''\n\n
             SAS_CCF = {fullccfcif}
@@ -462,11 +462,10 @@ class ODFobject(object):
         self.logFile = logFile
 
         # Make sure we are in the right place!
-        obs_dir = os.path.join(self.data_dir,self.odfid)
-        if os.path.isdir(obs_dir):
-            os.chdir(os.path.join(self.data_dir,self.odfid))
+        if os.path.isdir(self.work_dir):
+            os.chdir(self.work_dir)
         else:
-            print(f'The directory for the observation ID ({self.odfid}) does not seem to exist!\n    {obs_dir}')
+            print(f'The directory for the observation ID ({self.odfid}) does not seem to exist!\n    {self.obs_dir}')
             print('Has \'setodf\' been run?')
             raise Exception(f'Problem with the directory for odfID = {self.odfid}!')
 
