@@ -319,7 +319,7 @@ class ODFobject(object):
                       logger=logger)
 
         # If only PPS files were requested then setodf stops here.
-        # Else will run cfibuild and odfingest.
+        # Else will run cifbuild and odfingest.
         if level == 'PPS':
             ppsdir = os.path.join(self.data_dir, self.odfid, 'pps')
             ppssumhtml = 'P' + self.odfid + 'OBX000SUMMAR0000.HTM'
@@ -328,7 +328,7 @@ class ODFobject(object):
             logger.log('info', f'PPS products can be found in {ppsdir}')
             print(f'\nPPS products can be found in {ppsdir}\n\nLink to Observation Summary html: {ppssumhtmllink}')
         else:
-            # Run cfibuild and odfingest on the new data.
+            # Run cifbuild and odfingest on the new data.
             os.chdir(self.odf_dir)
             logger.log('info', f'Changed directory to {self.odf_dir}')
 
@@ -364,7 +364,7 @@ class ODFobject(object):
                 logger.log('info', f'Running cifbuild...')
                 print(f'\nRunning cifbuild...')
             
-            ##### Running cfibuild
+            ##### Running cifbuild
             rc = subprocess.run(cmd)
             if rc.returncode != 0:
                 logger.log('error', 'cifbuild failed to complete')
@@ -556,7 +556,7 @@ class ODFobject(object):
 
             1. Call the function 'setodf'
                 A. Download data
-                B. Run 'cfibuild'
+                B. Run 'cifbuild'
                 C. Run 'odfingest'
             2. Run 'epproc'
             3. Run 'emproc'
@@ -571,12 +571,12 @@ class ODFobject(object):
                     encryption_key = kwargs.get('encryption_key', None),
                     overwrite      = kwargs.get('overwrite', False),
                     repo           = kwargs.get('repo', 'esa'))
-        
+
         self.runanalysis('epproc',
                          kwargs.get('epproc_inargs', []),
                          rerun = kwargs.get('rerun', False),
                          logFile=kwargs.get('logFile', 'epproc.log'))
-        
+
         self.runanalysis('emproc',
                          kwargs.get('emproc_inargs', []),
                          rerun = kwargs.get('rerun', False),

@@ -18,7 +18,7 @@ Created on Wed Apr 26 12:39:28 2023
 
     SAS is initialized automatically upon import (import pysas).
 
-    This script will download data for a single obsID, and run cfibuild and 
+    This script will download data for a single obsID, and run cifbuild and 
     odfingest.
     
 """
@@ -31,5 +31,5 @@ obsid = '0802710101'
 # Create an odf object.
 odf = pysas.odfcontrol.ODFobject(obsid)
 
-# This will download the obsid and run cfibuild, odfingest, epproc, and emproc.
+# This will download the obsid and run cifbuild, odfingest, epproc, and emproc.
 odf.basic_setup(repo='heasarc')
