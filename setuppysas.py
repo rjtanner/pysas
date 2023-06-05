@@ -1,4 +1,4 @@
-# configpysas.py
+# setuppysas.py
 #
 # Written by: Ryan Tanner
 # email: ryan.tanner@nasa.gov
@@ -18,7 +18,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with SAS. If not, see <http://www.gnu.org/licenses/>.
 
-# configpysas.py
+# setuppysas.py
 
 """
 This script can be used to set default directories for:
@@ -40,7 +40,7 @@ import os
 # Local application imports
 from pysas.configutils import initializesas, sas_cfg, set_sas_config_default
 
-__version__ = 'configpysas (configpysas-0.1)'
+__version__ = 'setuppysas (setuppysas-0.1)'
 
 verbosity        = sas_cfg.get('sas','verbosity')
 suppress_warning = sas_cfg.get('sas','suppress_warning')

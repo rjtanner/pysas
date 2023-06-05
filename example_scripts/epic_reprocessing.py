@@ -34,7 +34,7 @@ odf = pysas.odfcontrol.ODFobject(obsid)
 odf.basic_setup(repo='heasarc')
 
 # Method 2: Explicitly laid out
-# odf.setodf(overwrite=False,repo='heasarc')
+# odf.odfcompile(overwrite=False,repo='heasarc')
 # odf.runanalysis('epproc',[],rerun=False)
 # odf.runanalysis('emproc',[],rerun=False)
 

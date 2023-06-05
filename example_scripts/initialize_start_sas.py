@@ -42,5 +42,5 @@ odf = pysas.odfcontrol.ODFobject(obsid)
 odf.inisas(sas_dir, sas_ccfpath)
 
 # This will download the obsid and run cifbuild and odfingest.
-odf.setodf(data_dir=data_dir)
+odf.odfcompile(data_dir=data_dir)
 

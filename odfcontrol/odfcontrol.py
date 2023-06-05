@@ -29,7 +29,6 @@ odfcontrol.py
 import os, sys, subprocess, shutil, glob, tarfile, gzip
 
 # Third party imports
-# (see below for astroquery)
 
 # Local application imports
 # from .version import VERSION, SAS_RELEASE, SAS_AKA
@@ -47,7 +46,7 @@ class ODFobject(object):
     """
     Class for observation data files (ODF).
 
-        An odfid and data_dir are necessary.
+        An odfid is necessary.
 
         data_dir is the base directory where you store all XMM data.
 
@@ -62,13 +61,14 @@ class ODFobject(object):
 
     """
 
-    def __init__(self,odfid):
+    def __init__(self,odfid,data_dir=None):
         self.odfid = odfid
+        self.data_dir = data_dir
         self.files = {}
 
     def inisas(self,sas_dir,sas_ccfpath,verbosity=4,suppress_warning=1):
         """
-        Simple wrapper for initializesas defined in configutils.
+        Simple wrapper for 'initializesas' defined in configutils.
         """
         self.sas_dir = sas_dir
         self.sas_ccfpath = sas_ccfpath
@@ -82,7 +82,8 @@ class ODFobject(object):
 
     def sastalk(self,verbosity=4,suppress_warning=1):
         """
-        Simple function to set general SAS veriables.
+        Simple function to set general SAS veriables 'verbosity' 
+        and 'suppress_warning'.
         """
 
         self.verbosity = verbosity
@@ -91,12 +92,18 @@ class ODFobject(object):
         os.environ['SAS_VERBOSITY'] = '{}'.format(self.verbosity)
         os.environ['SAS_SUPPRESS_WARNING'] = '{}'.format(self.suppress_warning)
 
-    def setodf(self,data_dir=None,level='ODF',
+    def odfcompile(self,data_dir=None,level='ODF',
                sas_ccf=None,sas_odf=None,
                cifbuild_opts=None,odfingest_opts=None,
                encryption_key=None,overwrite=False,repo='esa'):
         """
-        The setodf function will automatically look in data_dir for the subdirectory 
+        Before running this function an ODFobject must be created first. e.g.
+
+        odf = pysas.odfcontrol.ODFobject(obsid)
+
+        This function can then be used as, odf.odfcompile().
+
+        The odfcompile function will automatically look in data_dir for the subdirectory 
         data_dir/odfid. If it does not exist then it will download the data.
         
         If it exists it will search data_dir/odfid and any subdirectories for the ccf.cif
@@ -109,7 +116,7 @@ class ODFobject(object):
         Inputs:
             --REQUIRED--
 
-            --odfid:          (string): ID of ODF in string format.
+                NONE
 
             --OPTIONAL--
 
@@ -148,6 +155,11 @@ class ODFobject(object):
 
         # Where are we?
         startdir = os.getcwd()
+
+        # Brief check to see if data_dir was 
+        # given on odfobject creation.
+        if self.data_dir != None:
+            data_dir = self.data_dir
 
         # Start checking data_dir
         if data_dir == None:
@@ -295,7 +307,7 @@ class ODFobject(object):
                 print('SAS_ODF = {0}'.format(self.files['sas_ccf']))
 
                 if not os.path.exists(self.work_dir): os.mkdir(self.work_dir)
-                # Exit the setodf function. Everything is set.
+                # Exit the odfcompile function. Everything is set.
                 return
             else:
                 # If obs_dir exists and overwrite = True then remove obs_dir.
@@ -318,7 +330,7 @@ class ODFobject(object):
                       encryption_key=self.encryption_key,repo=self.repo,
                       logger=logger)
 
-        # If only PPS files were requested then setodf stops here.
+        # If only PPS files were requested then odfcompile stops here.
         # Else will run cifbuild and odfingest.
         if level == 'PPS':
             ppsdir = os.path.join(self.data_dir, self.odfid, 'pps')
@@ -466,7 +478,7 @@ class ODFobject(object):
             os.chdir(self.work_dir)
         else:
             print(f'The directory for the observation ID ({self.odfid}) does not seem to exist!\n    {self.obs_dir}')
-            print('Has \'setodf\' been run?')
+            print('Has \'odfcompile\' been run?')
             raise Exception(f'Problem with the directory for odfID = {self.odfid}!')
 
         print(f"   SAS command to be executed: {self.task}, with arguments; \n{self.inargs}")
@@ -554,7 +566,7 @@ class ODFobject(object):
         """
         Function to do all basic analysis tasks. The function will:
 
-            1. Call the function 'setodf'
+            1. Call the function 'odfcompile'
                 A. Download data
                 B. Run 'cifbuild'
                 C. Run 'odfingest'
@@ -562,23 +574,23 @@ class ODFobject(object):
             3. Run 'emproc'
         """
 
-        self.setodf(data_dir       = kwargs.get('data_dir', None),
-                    level          = kwargs.get('level', 'ODF'),
-                    sas_ccf        = kwargs.get('sas_ccf', None),
-                    sas_odf        = kwargs.get('sas_odf', None),
-                    cifbuild_opts  = kwargs.get('cifbuild_opts', None),
-                    odfingest_opts = kwargs.get('odfingest_opts', None),
-                    encryption_key = kwargs.get('encryption_key', None),
-                    overwrite      = kwargs.get('overwrite', False),
-                    repo           = kwargs.get('repo', 'esa'))
+        self.odfcompile(data_dir       = kwargs.get('data_dir', None),
+                        level          = kwargs.get('level', 'ODF'),
+                        sas_ccf        = kwargs.get('sas_ccf', None),
+                        sas_odf        = kwargs.get('sas_odf', None),
+                        cifbuild_opts  = kwargs.get('cifbuild_opts', None),
+                        odfingest_opts = kwargs.get('odfingest_opts', None),
+                        encryption_key = kwargs.get('encryption_key', None),
+                        overwrite      = kwargs.get('overwrite', False),
+                        repo           = kwargs.get('repo', 'esa'))
 
         self.runanalysis('epproc',
-                         kwargs.get('epproc_inargs', []),
+                         kwargs.get('inargs', []),
                          rerun = kwargs.get('rerun', False),
                          logFile=kwargs.get('logFile', 'epproc.log'))
 
         self.runanalysis('emproc',
-                         kwargs.get('emproc_inargs', []),
+                         kwargs.get('inargs', []),
                          rerun = kwargs.get('rerun', False),
                          logFile=kwargs.get('logFile', 'emproc.log'))
 
