@@ -34,13 +34,12 @@ import os, sys, subprocess, shutil, glob, tarfile, gzip
 # from .version import VERSION, SAS_RELEASE, SAS_AKA
 # from pysas.logger import TaskLogger as TL
 from pysas.configutils import sas_cfg
-from pysas.sastask import MyTask
 # from pysas.wrapper import Wrapper as w
 
 
 # __version__ = f'pipeline (startsas-{VERSION}) [{SAS_RELEASE}-{SAS_AKA}]' 
 __version__ = 'pipeline (pipeline-0.1)'
-__all__ = []
+__all__ = ['_ODF', 'download_data']
 
 class SASpipeline(object):
     """
@@ -63,82 +62,35 @@ class SASpipeline(object):
                 self.create_basic(pipename)
             else:
                 print('Creating a generic pipeline.')
-                tempfile = os.path.join(os.path.dirname(os.path.abspath(__file__)),os.path.join('pipe_library','pipe_template.txt'))
-                self.pipeline = self.read(tempfile)
+                self.pipeline = self.read(os.path.join(os.path.dirname(os.path.abspath(__file__)),'pipe_template.txt'))
         
         if pipename == None:
             self.pipename = 'default'
 
     def set_pipename(self,pipename):
-        """
-        Simple method to set the name of the pipeline.
-
-        Inputs
-
-            --pipename: (string)
-        """
         self.pipename = pipename
 
     def get_obs_dir(self,odfid):
-        """
-        Given an odfid, it will check data_dir for a corresponding
-        observation directory and return the directory.
-
-        Inputs
-
-            --odfid:    (string)
-        """
         pass
 
-    def add_command(self,cmd,inargs=[]):
-        """
-        Adds a command to the pipeline, along with the input arguments. Uses 
-        the method 'processargs' from 'MyTask' to check the accuracy of the 
-        commands and inputs vs. the XML parameter files in SAS_PATH/config/.
-
-        Inputs:
-
-            --cmd:      (string): SAS command to add to the pipeline.
-
-            --inargs:   (string): Input arguments for the SAS command.
-                                  Can be left blank.
-        """
-        if isinstance(inargs, str):
-            inargs = [inargs]
-        self.MyTask = MyTask(cmd,inargs,logFile='DEFAULT',stdout_to_console=True)
-        self.MyTask.readparfile()
-        self.MyTask.processargs()
+    def add_command(self,cmd,inargs=''):
         sas_path = os.environ['SAS_PATH'].split(':')
-        cmdnotfound = True
         for path in sas_path:
             parfile = cmd + '.par'
             files = glob.glob(os.path.join(path, 'config', parfile))
-            if len(files) > 0:
-                cmdnotfound = False
+            if files:
+                if files[0] != '': cmdnotfound = True
                 break
 
         if cmdnotfound:
-            raise Exception(f'The command named \'{cmd}\' does not exist. Wrong syntax?')
-        self.pipeline.append(f'{cmd} {inargs[0]}'.strip())
+            raise Exception(f'Does not exist any command named \'{cmd}\'. Wrong syntax?')
+        self.pipeline.append(f'{cmd} {inargs}'.strip())
 
     def remove_command(self,cmd=None,linenum=None):
-        """
-        Removes a command from the pipeline. If multiple versions of the command 
-        are found then it will return an error and list of lines with that 
-        command along with line numbers. The input variable 'linenum' can be 
-        used to specify which line to remove from the pipeline. 
-
-        Inputs:
-
-            --cmd(required):    (string): The SAS command to be removed.
-
-            --linenum(optional):(int)   : The line number of the command to be
-                                          removed.
-        """
         if linenum:
             if cmd and not (cmd in self.pipeline[linenum]):
                 print(f'Command {cmd} not found in line number {linenum}.')
-                raise Exception(f'Command {cmd} not found in line number {linenum}.')
+                return
             lineremove = linenum
         else:
             linelist = []
@@ -148,7 +100,7 @@ class SASpipeline(object):
                     linelist.append(i)
             if len(linelist) == 0:
                 print(f'No lines with {cmd} were found!')
-                raise Exception(f'No lines with {cmd} were found!')
+                return
             elif len(linelist) == 1:
                 lineremove = linelist[0]
             elif len(linelist) > 1:
@@ -156,7 +108,7 @@ class SASpipeline(object):
                 print(f'Specify which line to remove using remove_command(\'{cmd}\',linenum=???).\n')
                 for cmdline in linelist:
                     print(f'{cmdline} '+self.pipeline[cmdline])
-                raise Exception(f'\Multiple lines with the command \"{cmd}\" found.')
+                return
 
         self.pipeline.pop(lineremove)
 
@@ -200,13 +152,13 @@ class SASpipeline(object):
         self.write(outfile)
 
     def copy_basic(self,filename,pipefile=None):
-        tempfile = os.path.join(os.path.dirname(os.path.abspath(__file__)),os.path.join('pipe_library','pipe_template.txt'))
+        tempfile = os.path.join(os.path.dirname(os.path.abspath(__file__)),'pipe_template.txt')
         shutil.copy(tempfile,filename)
         self.read(filename)
         return filename
     
     def create_basic(self,pipename=None):
-        filename = os.path.join(os.path.dirname(os.path.abspath(__file__)),os.path.join('pipe_library','pipe_template.txt'))
+        filename = os.path.join(os.path.dirname(os.path.abspath(__file__)),'pipe_template.txt')
         self.read(filename)
         self.pipename = pipename
         return filename

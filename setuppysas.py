@@ -33,7 +33,7 @@ pysas is imported.
 
 
 # Standard library imports
-import os, subprocess
+import os
 
 # Third party imports
 
@@ -77,10 +77,6 @@ outcomment="""
 
 print(outcomment)
 
-positive = ['y','yes','ye','yeah','yea','ys','aye','yup','totally','si','oui']
-negative = ['n','no','not','nay','no way','nine','non']
-
-############## Getting sas_dir ##############
 script_path = path = os.path.normpath(os.path.abspath(__file__))
 split_path = path.split(os.sep)
 
@@ -92,35 +88,18 @@ if split_path[-2] == 'pysas' and split_path[-3] == 'python' and split_path[-4] =
     print('\n    {0}\n'.format(psas_dir))
     response = input('y/n: ')
     response = response.lower()
-    if response in positive:
+    if response == 'y' or 'yes' or 'ye' or 'yeah' or 'yea':
         sas_dir = psas_dir
         print(f'Setting SAS_DIR = {sas_dir}')
-    elif response in negative:
-        # Ask for SAS_DIR path
-        scomment = '\nPlease provide the full path to the SAS install directory (SAS_DIR).\n'
-        print(scomment)
-        sas_dir = input('Full path to SAS: ')
-    else:
-        print(f'Your response, {response}, is not recognized.')
-        print(f'Try any of these: {positive}')
-        print(f'-or any of these: {negative}')
-        raise Exception('Input not recognized!')
 else:
     # Ask for SAS_DIR path
     scomment = '\nPlease provide the full path to the SAS install directory (SAS_DIR).\n'
     print(scomment)
     sas_dir = input('Full path to SAS: ')
 
-if not sas_dir.startswith('\\'): sas_dir = os.path.abspath(sas_dir)
-if not sas_dir.endswith('\\'): sas_dir += '\\'
-if not os.path.exists(sas_dir):
-    print(f'SAS path {sas_dir} does not exist! Check path or SAS install!')
-    raise Exception(f'SAS path {sas_dir} does not exist!')
-
 print('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
-############## Getting sas_ccfpath ##############
-
+# Ask for SAS_CCFPATH path
 scomment = """
     SAS_CCFPATH not set.
 
@@ -129,38 +108,9 @@ scomment = """
 """
 print(scomment)
 sas_ccfpath = input('Full path to calibration files: ')
-if not sas_ccfpath.startswith('\\'): sas_ccfpath = os.path.abspath(sas_ccfpath)
-if not sas_ccfpath.endswith('\\'): sas_ccfpath += '\\'
-
-create_ccf = False
-if not os.path.exists(sas_ccfpath):
-    print(f'The directory {sas_ccfpath} was not found!')
-    response = input('Should I create it? (y/n): ')
-    response = response.lower()
-    if response in positive:
-        sas_dir = psas_dir
-        print(f'Creating: {sas_ccfpath}')
-        os.mkdir(sas_ccfpath)
-        print('Would you like to download the current valid set of calibration files?\nThis will take some time.')
-        response2 = input('(y/n): ')
-        response2 = response2.lower()
-        if response2 in positive:
-            cmd = f'rsync -v -a --delete --delete-after --force --include=\'*.CCF\' --exclude=\'*/\' sasdev-xmm.esac.esa.int::XMM_VALID_CCF {sas_ccfpath}/'
-            result = subprocess.run(cmd, shell=True)
-    elif response in negative:
-        print('\nPlease create the directory for the calibration files!\n')
-    else:
-        print(f'Your response, {response}, is not recognized.')
-        print(f'Try any of these: {positive}')
-        print(f'-or any of these: {negative}')
-        raise Exception('Input not recognized!')
-
-
-
 print('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
-############## Getting data_dir ##############
-
+# Ask for data_dir path
 scomment = """
     No default data directory.
 
