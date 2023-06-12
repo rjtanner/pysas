@@ -21,19 +21,42 @@
 # setuppysas.py
 
 """
-This script can be used to set default directories for:
-
+    The purpose of this script is so that the user can set the pySAS
+    defaults 
+    
         sas_dir
         sas_ccfpath
         data_dir
+        
+    Once the defaults are set by the user, SAS will automatically be 
+    initialized when pySAS is imported (import pysas).
 
-After running this script pysas will automatically initialize SAS when
-pysas is imported.
+    The user can also optionally set a default data directory (data_dir)
+    where observation data files (odf) will be downloaded. A separate 
+    subdirectory will be made for each observation ID (obsID).
+    
+    The default data directory can be set or change later using the 
+    function set_sas_config_default().
+
+    For example:
+
+        from pysas.configutils import set_sas_config_default
+        data_path = '/path/to/data/dir/'
+        set_sas_config_default('data_dir', data_path)
+        
+    The default values for the SAS directory (sas_dir), the path to the
+    calibration files (sas_ccfpath), along with 'verbosity' and 
+    'suppress_warning', can also be set in the same way.
+
+    At any time the user can clear all previous values with,
+
+        from pysas.configutils import clear_sas_defaults
+        clear_sas_defaults()
 """
 
 
 # Standard library imports
-import os, subprocess
+import os, subprocess, time
 
 # Third party imports
 
@@ -45,26 +68,36 @@ __version__ = 'setuppysas (setuppysas-0.1)'
 verbosity        = sas_cfg.get('sas','verbosity')
 suppress_warning = sas_cfg.get('sas','suppress_warning')
 
-outcomment="""
+outcomment = """
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     The purpose of this script is so that the user can set the pySAS
-    defaults sas_dir and sas_ccfpath. Once the defaults are set by
-    the user, SAS will automatically be initialized when pySAS is
-    imported (import pysas).
+    defaults 
+    
+        sas_dir
+        sas_ccfpath
+        data_dir
+        
+    Once the defaults are set by the user, SAS will automatically be 
+    initialized when pySAS is imported (import pysas).
 
     The user can also optionally set a default data directory (data_dir)
-    now or set it later using the function set_sas_config_default().
+    where observation data files (odf) will be downloaded. A separate 
+    subdirectory will be made for each observation ID (obsID).
+    
+    The default data directory can be set or change later using the 
+    function set_sas_config_default().
 
     For example:
 
         from pysas.configutils import set_sas_config_default
         data_path = '/path/to/data/dir/'
         set_sas_config_default('data_dir', data_path)
-
-    The default values for SAS 'verbosity' and 'suppress_warning' can
-    also be set in the same way.
+        
+    The default values for the SAS directory (sas_dir), the path to the
+    calibration files (sas_ccfpath), along with 'verbosity' and 
+    'suppress_warning', can also be set in the same way.
 
     At any time the user can clear all previous values with,
 
@@ -79,6 +112,8 @@ print(outcomment)
 
 positive = ['y','yes','ye','yeah','yea','ys','aye','yup','totally','si','oui']
 negative = ['n','no','not','nay','no way','nine','non']
+esa = ['esa','e','es','europe']
+nasa = ['nasa','n','na','nas','ns','nsa']
 
 ############## Getting sas_dir ##############
 script_path = path = os.path.normpath(os.path.abspath(__file__))
@@ -111,8 +146,8 @@ else:
     print(scomment)
     sas_dir = input('Full path to SAS: ')
 
-if not sas_dir.startswith('\\'): sas_dir = os.path.abspath(sas_dir)
-if not sas_dir.endswith('\\'): sas_dir += '\\'
+if not sas_dir.startswith('/'): sas_dir = os.path.abspath(sas_dir)
+if sas_dir.endswith('/'): sas_dir = sas_dir[:-1]
 if not os.path.exists(sas_dir):
     print(f'SAS path {sas_dir} does not exist! Check path or SAS install!')
     raise Exception(f'SAS path {sas_dir} does not exist!')
@@ -129,10 +164,12 @@ scomment = """
 """
 print(scomment)
 sas_ccfpath = input('Full path to calibration files: ')
-if not sas_ccfpath.startswith('\\'): sas_ccfpath = os.path.abspath(sas_ccfpath)
-if not sas_ccfpath.endswith('\\'): sas_ccfpath += '\\'
+if not sas_ccfpath.startswith('/'): sas_ccfpath = os.path.abspath(sas_ccfpath)
+if sas_ccfpath.endswith('/'): sas_ccfpath = sas_ccfpath[:-1]
 
 create_ccf = False
+download_calibration = False
+esa_or_nasa = ''
 if not os.path.exists(sas_ccfpath):
     print(f'The directory {sas_ccfpath} was not found!')
     response = input('Should I create it? (y/n): ')
@@ -141,12 +178,28 @@ if not os.path.exists(sas_ccfpath):
         sas_dir = psas_dir
         print(f'Creating: {sas_ccfpath}')
         os.mkdir(sas_ccfpath)
-        print('Would you like to download the current valid set of calibration files?\nThis will take some time.')
+        print('Would you like to download the current valid set of calibration files?\nWill download at the end of this script.')
         response2 = input('(y/n): ')
         response2 = response2.lower()
         if response2 in positive:
-            cmd = f'rsync -v -a --delete --delete-after --force --include=\'*.CCF\' --exclude=\'*/\' sasdev-xmm.esac.esa.int::XMM_VALID_CCF {sas_ccfpath}/'
-            result = subprocess.run(cmd, shell=True)
+            download_calibration = True
+            print('Which repository do you want to use to download the calibration files?')
+            esa_or_nasa = input('ESA or NASA: ')
+            esa_or_nasa = esa_or_nasa.lower()
+            if esa_or_nasa in esa+nasa:
+                pass
+            else:
+                print(f'Your response, {esa_or_nasa}, is not recognized.')
+                print(f'Try any of these: {esa}')
+                print(f'-or any of these: {nasa}')
+                raise Exception('Input not recognized!')
+        elif response2 in negative:
+            print('Please make sure you download the calibration data!')
+        else:
+            print(f'Your response, {response2}, is not recognized.')
+            print(f'Try any of these: {positive}')
+            print(f'-or any of these: {negative}')
+            raise Exception('Input not recognized!')
     elif response in negative:
         print('\nPlease create the directory for the calibration files!\n')
     else:
@@ -155,8 +208,6 @@ if not os.path.exists(sas_ccfpath):
         print(f'-or any of these: {negative}')
         raise Exception('Input not recognized!')
 
-
-
 print('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
 ############## Getting data_dir ##############
@@ -164,11 +215,14 @@ print('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 scomment = """
     No default data directory.
 
-    Please provide the full path to the user data directory (OPTIONAL).
+    Please provide the full path to the user data directory.
+    (OPTIONAL, but recommended)
 
 """
 print(scomment)
-data_dir = input('Full path to user data directory (OPTIONAL): ')
+data_dir = input('Full path to user data directory: ')
+if not data_dir.startswith('/'): data_dir = os.path.abspath(data_dir)
+if data_dir.endswith('/'): data_dir = data_dir[:-1]
 print('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
 # Check if data_dir exists. If not then create it.
@@ -177,7 +231,7 @@ if not os.path.isdir(data_dir):
     os.mkdir(data_dir)
     print(f'{data_dir} has been created!')
 else:
-    print(f'\nData directory exist. Will use {data_dir} to download data.')
+    print(f'\nData directory exists. Will use {data_dir} to download data.')
 set_sas_config_default('data_dir',data_dir)
 
 # Check if paths for SAS_DIR and SAS_CCFPATH exist.
@@ -199,6 +253,16 @@ else:
     else:
         print(f'Default SAS_CCFPATH = {sas_ccfpath}')
 
+if download_calibration:
+    if esa_or_nasa in esa:
+        cmd = f'rsync -v -a --delete --delete-after --force --include=\'*.CCF\' --exclude=\'*/\' sasdev-xmm.esac.esa.int::XMM_VALID_CCF {sas_ccfpath}'
+    elif esa_or_nasa in nasa:
+        cmd = f'wget -m -nH --cut-dirs=4 -e robots=off -l 2 -np -R "index.html*" https://heasarc.gsfc.nasa.gov/FTP/xmm/data/CCF -P {sas_ccfpath}'
+    print(f'Downloading calibration data using the command:\n{cmd}')
+    print('This may take a while.')
+    time.sleep(3)
+    result = subprocess.run(cmd, shell=True)
+
 scomment = f"""
     Success!
 
@@ -208,6 +272,11 @@ scomment = f"""
 
     Upon running the command 'import pysas' SAS will 
     automatically be initialized.
+
+    The defaults can be changed at any time using the commands:
+
+        from pysas.configutils import set_sas_config_default
+        set_sas_config_default('value_to_set',value)
 
     At any time the user can clear all previous values with,
 

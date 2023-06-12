@@ -221,6 +221,7 @@ def set_sas_config(option, value):
     value : number or string
         The value to set the option to.
     """
+    option = option.lower()
     sas_cfg.set("sas", option, value=str(value))
 
 def set_sas_config_default(option, value):
