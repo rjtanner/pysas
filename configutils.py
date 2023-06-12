@@ -214,6 +214,8 @@ def set_sas_config(option, value):
     """
     Set SAS configuration values.
 
+    This sets values temporarily for the session.
+
     Parameters
     ----------
     option : string
@@ -227,6 +229,8 @@ def set_sas_config(option, value):
 def set_sas_config_default(option, value):
     """
     Set default SAS configuration values.
+
+    This sets values as default for future sessions.
 
     Parameters
     ----------
