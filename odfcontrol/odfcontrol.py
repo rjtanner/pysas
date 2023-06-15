@@ -138,7 +138,7 @@ class ODFobject(object):
 
             --odfingest_opts: (string): Options for odfingest.
 
-            --encryption_key: (string): Encryption key for propietary data, a string 32 
+            --encryption_key: (string): Encryption key for proprietary data, a string 32 
                                         characters long. -OR- Path to file containing 
                                         ONLY the encryption key.
 
@@ -585,12 +585,12 @@ class ODFobject(object):
                         repo           = kwargs.get('repo', 'esa'))
 
         self.runanalysis('epproc',
-                         kwargs.get('inargs', []),
+                         kwargs.get('epproc_args', []),
                          rerun = kwargs.get('rerun', False),
                          logFile=kwargs.get('logFile', 'epproc.log'))
 
         self.runanalysis('emproc',
-                         kwargs.get('inargs', []),
+                         kwargs.get('emproc_args', []),
                          rerun = kwargs.get('rerun', False),
                          logFile=kwargs.get('logFile', 'emproc.log'))
 

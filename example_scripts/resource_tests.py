@@ -39,9 +39,9 @@ odf = pysas.odfcontrol.ODFobject(obsid)
 odf.basic_setup(encryption_key=encryption_key,overwrite=True,repo='heasarc')
 
 # Method 2: Explicitly laid out
-# odf.odfcompile(overwrite=False,repo='heasarc')
-# odf.runanalysis('epproc',[],rerun=False)
-# odf.runanalysis('emproc',[],rerun=False)
+# odf.odfcompile(overwrite=True,repo='heasarc')
+# odf.runanalysis('epproc',[],rerun=True)
+# odf.runanalysis('emproc',[],rerun=True)
 
 end_time = datetime.datetime.now()
 elapsed_time = end_time - start_time

@@ -34,9 +34,9 @@ odf = pysas.odfcontrol.ODFobject(obsid)
 odf.basic_setup(repo='heasarc')
 
 # Method 2: Explicitly laid out
-# odf.odfcompile(overwrite=False,repo='heasarc')
-# odf.runanalysis('epproc',[],rerun=False)
-# odf.runanalysis('emproc',[],rerun=False)
+# odf.odfcompile(repo='heasarc')
+# odf.runanalysis('epproc',[])
+# odf.runanalysis('emproc',[])
 
 ###############################################################################
 
@@ -64,9 +64,9 @@ plt.figure(figsize=(15,60))
 
 pl=1
 
-evts=len(odf.pnevt_list)+len(odf.m1evt_list)+len(odf.m2evt_list)
-if len(odf.pnevt_list) >0:
-    for x in odf.pnevt_list:  
+evts=len(odf.files['pnevt_list'])+len(odf.files['m1evt_list'])+len(odf.files['m2evt_list'])
+if len(odf.files['pnevt_list']) >0:
+    for x in odf.files['pnevt_list']:  
         hdu_list = fits.open(x, memmap=True)
         evt_data = Table(hdu_list[1].data)
         
@@ -132,8 +132,8 @@ if len(odf.pnevt_list) >0:
 
         hdu_list.close()
     
-if len(odf.m1evt_list) >0:
-    for x in odf.m1evt_list:
+if len(odf.files['m1evt_list']) >0:
+    for x in odf.files['m1evt_list']:
         hdu_list = fits.open(x, memmap=True)
         evt_data = Table(hdu_list[1].data)
 
@@ -199,8 +199,8 @@ if len(odf.m1evt_list) >0:
     
         hdu_list.close()
     
-if len(odf.m2evt_list) >0:
-    for x in odf.m2evt_list:
+if len(odf.files['m2evt_list']) >0:
+    for x in odf.files['m2evt_list']:
         hdu_list = fits.open(x, memmap=True)
         evt_data = Table(hdu_list[1].data)
 
