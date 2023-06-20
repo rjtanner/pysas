@@ -267,7 +267,7 @@ class ODFobject(object):
                 # Set 'SAS_CCF' enviroment variable.
                 os.environ['SAS_CCF'] = self.files['sas_ccf']
                 logger.log('info', 'SAS_CCF = {0}'.format(self.files['sas_ccf']))
-                print(f'SAS_CCF = {0}'.format(self.files['sas_ccf']))
+                print('SAS_CCF = {}'.format(self.files['sas_ccf']))
 
                 # Looking for *SUM.SAS file.
                 if self.files['sas_odf'] == None:
@@ -303,8 +303,8 @@ class ODFobject(object):
                 
                 # Set 'SAS_ODF' enviroment variable.
                 os.environ['SAS_ODF'] = self.files['sas_odf']
-                logger.log('info', 'SAS_ODF = {0}'.format(self.files['sas_ccf']))
-                print('SAS_ODF = {0}'.format(self.files['sas_ccf']))
+                logger.log('info', 'SAS_ODF = {0}'.format(self.files['sas_odf']))
+                print('SAS_ODF = {0}'.format(self.files['sas_odf']))
 
                 if not os.path.exists(self.work_dir): os.mkdir(self.work_dir)
                 # Exit the odfcompile function. Everything is set.
@@ -491,7 +491,7 @@ class ODFobject(object):
             for root, dirs, files in os.walk("."):  
                 for filename in files:
                     if (filename.find('EPN') != -1) and filename.endswith('ImagingEvts.ds'):
-                        self.files['pnevt_list'].append(os.path.join(root,filename))
+                        self.files['pnevt_list'].append(os.path.abspath(os.path.join(root,filename)))
                         exists = True
             if exists and not self.rerun:    
                 print(" > " + str(len(self.files['pnevt_list'])) + " EPIC-pn event list found. Not running epproc again.\n")
@@ -505,7 +505,7 @@ class ODFobject(object):
                 for root, dirs, files in os.walk("."):  
                     for filename in files:
                         if (filename.find('EPN') != -1) and filename.endswith('ImagingEvts.ds'):
-                            self.files['pnevt_list'].append(os.path.join(root,filename))
+                            self.files['pnevt_list'].append(os.path.abspath(os.path.join(root,filename)))
                             exists = True
                 if exists:    
                     print(" > " + str(len(self.files['pnevt_list'])) + " EPIC-pn event list found after running epproc.\n")
@@ -523,10 +523,10 @@ class ODFobject(object):
             for root, dirs, files in os.walk("."):  
                 for filename in files:
                     if (filename.find('EMOS1') != -1) and filename.endswith('ImagingEvts.ds'):
-                        self.files['m1evt_list'].append(os.path.join(root,filename))
+                        self.files['m1evt_list'].append(os.path.abspath(os.path.join(root,filename)))
                         exists = True
                     if (filename.find('EMOS2') != -1) and filename.endswith('ImagingEvts.ds'):
-                        self.files['m2evt_list'].append(os.path.join(root,filename))
+                        self.files['m2evt_list'].append(os.path.abspath(os.path.join(root,filename)))
                         exists = True
             if exists and not self.rerun:    
                 print(" > " + str(len(self.files['m1evt_list'])) + " EPIC-MOS1 event list found. Not running emproc again.\n")
@@ -544,10 +544,10 @@ class ODFobject(object):
                 for root, dirs, files in os.walk("."):  
                     for filename in files:
                         if (filename.find('EMOS1') != -1) and filename.endswith('ImagingEvts.ds'):
-                            self.files['m1evt_list'].append(os.path.join(root,filename))
+                            self.files['m1evt_list'].append(os.path.abspath(os.path.join(root,filename)))
                             exists = True 
                         if (filename.find('EMOS2') != -1) and filename.endswith('ImagingEvts.ds'):
-                            self.files['m2evt_list'].append(os.path.join(root,filename))
+                            self.files['m2evt_list'].append(os.path.abspath(os.path.join(root,filename)))
                             exists = True            
                 if exists:    
                     print(" > " + str(len(self.files['m1evt_list'])) + " EPIC-MOS1 event list found after running emproc.\n")
