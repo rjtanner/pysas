@@ -152,21 +152,21 @@ if not os.path.exists(sas_dir):
     print(f'SAS path {sas_dir} does not exist! Check path or SAS install!')
     raise Exception(f'SAS path {sas_dir} does not exist!')
 
-pysas_dir = glob.glob(sas_dir+'/lib/python')
-if os.path.exists(pysas_dir):
-    home_dir = os.path.expanduser('~')
-    cmd = ''
-    if os.path.exists(os.path.join(home_dir,'.bash_profile')):
-        bashfile = '.bash_profile'
-    elif os.path.exists(os.path.join(home_dir,'.bashrc')):
-        bashfile = '.bashrc'
-    else:
-        bashfile = ''
-    if bashfile != '':
-        bashpath = os.path.join(home_dir,bashfile)
-        cmd = f'echo PYTHONPATH=\'{pysas_dir}:$PYTHONPATH >>{bashfile}\''
-        print(f'Adding {pysas_dir} to PYTHONPATH in {bashfile}')
-        result = subprocess.run(cmd, shell=True)
+# pysas_dir = glob.glob(sas_dir+'/lib/python')[0]
+# if os.path.exists(pysas_dir):
+#     home_dir = os.path.expanduser('~')
+#     cmd = ''
+#     if os.path.exists(os.path.join(home_dir,'.bash_profile')):
+#         bashfile = '.bash_profile'
+#     elif os.path.exists(os.path.join(home_dir,'.bashrc')):
+#         bashfile = '.bashrc'
+#     else:
+#         bashfile = ''
+#     if bashfile != '':
+#         bashpath = os.path.join(home_dir,bashfile)
+#         cmd = f'echo PYTHONPATH=\'{pysas_dir}:$PYTHONPATH >>{bashfile}\''
+#         print(f'Adding {pysas_dir} to PYTHONPATH in {bashfile}')
+#         result = subprocess.run(cmd, shell=True)
 
 print('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
@@ -184,8 +184,6 @@ if not sas_ccfpath.startswith('/'): sas_ccfpath = os.path.abspath(sas_ccfpath)
 if sas_ccfpath.endswith('/'): sas_ccfpath = sas_ccfpath[:-1]
 
 create_ccf = False
-download_calibration = False
-esa_or_nasa = ''
 if not os.path.exists(sas_ccfpath):
     print(f'The directory {sas_ccfpath} was not found!')
     response = input('Should I create it? (y/n): ')
@@ -194,28 +192,6 @@ if not os.path.exists(sas_ccfpath):
         sas_dir = psas_dir
         print(f'Creating: {sas_ccfpath}')
         os.mkdir(sas_ccfpath)
-        print('Would you like to download the current valid set of calibration files?\nWill download at the end of this script.')
-        response2 = input('(y/n): ')
-        response2 = response2.lower()
-        if response2 in positive:
-            download_calibration = True
-            print('Which repository do you want to use to download the calibration files?')
-            esa_or_nasa = input('ESA or NASA: ')
-            esa_or_nasa = esa_or_nasa.lower()
-            if esa_or_nasa in esa+nasa:
-                pass
-            else:
-                print(f'Your response, {esa_or_nasa}, is not recognized.')
-                print(f'Try any of these: {esa}')
-                print(f'-or any of these: {nasa}')
-                raise Exception('Input not recognized!')
-        elif response2 in negative:
-            print('Please make sure you download the calibration data!')
-        else:
-            print(f'Your response, {response2}, is not recognized.')
-            print(f'Try any of these: {positive}')
-            print(f'-or any of these: {negative}')
-            raise Exception('Input not recognized!')
     elif response in negative:
         print('\nPlease create the directory for the calibration files!\n')
     else:
@@ -223,6 +199,32 @@ if not os.path.exists(sas_ccfpath):
         print(f'Try any of these: {positive}')
         print(f'-or any of these: {negative}')
         raise Exception('Input not recognized!')
+        
+download_calibration = False
+esa_or_nasa = ''
+print('Would you like to download the current valid set of calibration files?\nWill download at the end of this script.')
+response2 = input('(y/n): ')
+response2 = response2.lower()
+if response2 in positive:
+    download_calibration = True
+    print('Which repository do you want to use to download the calibration files?')
+    esa_or_nasa = input('ESA or NASA: ')
+    esa_or_nasa = esa_or_nasa.lower()
+    if esa_or_nasa in esa+nasa:
+        pass
+    else:
+        print(f'Your response, {esa_or_nasa}, is not recognized.')
+        print(f'Try any of these: {esa}')
+        print(f'-or any of these: {nasa}')
+        raise Exception('Input not recognized!')
+elif response2 in negative:
+    print('Please make sure you download the calibration data!')
+else:
+    print(f'Your response, {response2}, is not recognized.')
+    print(f'Try any of these: {positive}')
+    print(f'-or any of these: {negative}')
+    raise Exception('Input not recognized!')
+    
 
 print('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
