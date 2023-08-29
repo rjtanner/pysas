@@ -24,9 +24,9 @@
     The purpose of this script is so that the user can set the pySAS
     defaults 
     
-        sas_dir
-        sas_ccfpath
-        data_dir
+        sas_dir (required)
+        sas_ccfpath (required)
+        data_dir (optional)
         
     Once the defaults are set by the user, SAS will automatically be 
     initialized when pySAS is imported (import pysas).
@@ -75,9 +75,9 @@ outcomment = """
     The purpose of this script is so that the user can set the pySAS
     defaults 
     
-        sas_dir
-        sas_ccfpath
-        data_dir
+        sas_dir (required)
+        sas_ccfpath (required)
+        data_dir (optional)
         
     Once the defaults are set by the user, SAS will automatically be 
     initialized when pySAS is imported (import pysas).
