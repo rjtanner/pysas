@@ -265,6 +265,7 @@ class ODFobject(object):
                         sys.exit(1)
 
                 # Set 'SAS_CCF' enviroment variable.
+                #### Potential Bug Here, check it out. obs_dir exists, overwrite False, but ccf.cif doesn't exist, causes problem?
                 os.environ['SAS_CCF'] = self.files['sas_ccf']
                 logger.log('info', 'SAS_CCF = {0}'.format(self.files['sas_ccf']))
                 print('SAS_CCF = {}'.format(self.files['sas_ccf']))
