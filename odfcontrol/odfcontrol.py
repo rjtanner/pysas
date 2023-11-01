@@ -32,9 +32,9 @@ import os, sys, subprocess, shutil, glob, tarfile, gzip
 
 # Local application imports
 # from .version import VERSION, SAS_RELEASE, SAS_AKA
-from pysas.logger import TaskLogger as TL
-from pysas.configutils import initializesas, sas_cfg
-from pysas.wrapper import Wrapper as w
+from ..logger import TaskLogger as TL
+from ..configutils import initializesas, sas_cfg
+from ..wrapper import Wrapper as w
 
 
 # __version__ = f'odfcontrol (startsas-{VERSION}) [{SAS_RELEASE}-{SAS_AKA}]' 
@@ -573,6 +573,14 @@ class ODFobject(object):
                 C. Run 'odfingest'
             2. Run 'epproc'
             3. Run 'emproc'
+
+        All input arguments for 'odfcompile' can be passed to 'basic_setup'.
+
+        Input arguments for 'epproc' and 'emproc' can also be passed in 
+        using 'epproc_args' and 'emproc_args' respectively. By defaut 
+        'epproc' and 'emproc' will not rerun if output files are found,
+        but they can be forced to rerun by setting 'rerun=True' as an
+        input to 'basic_setup'.
         """
 
         self.odfcompile(data_dir       = kwargs.get('data_dir', None),

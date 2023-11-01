@@ -1,2 +1,2 @@
 from . import odfcontrol
-from pysas.configutils import initializesas
+from ..configutils import initializesas
