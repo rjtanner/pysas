@@ -474,6 +474,8 @@ class ODFobject(object):
         self.rerun = rerun
         self.logFile = logFile
 
+        print(self.inargs)
+
         # Make sure we are in the right place!
         if os.path.isdir(self.work_dir):
             os.chdir(self.work_dir)
