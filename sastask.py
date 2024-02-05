@@ -196,7 +196,7 @@ class MyTask(SASTask):
             outparams = []
             for key in list(inkeys):
                 outdict[key] = self.inargs[key]
-                if key == 'options':
+                if key == 'options' and outdict[key] != '':
                     outparams.append(outdict[key])
                 else:
                     outparams.append(key+'='+outdict[key])
