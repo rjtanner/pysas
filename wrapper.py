@@ -45,6 +45,7 @@ class Wrapper:
 
     def run(self):
         t = MyTask(self.taskname, self.inargs, self.logFile, self.stdout_to_console)
+        print(self.inargs)
         t.readparfile()
         t.processargs()
         t.runtask()

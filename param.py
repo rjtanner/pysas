@@ -359,6 +359,7 @@ def get_input_params(taskname,return_param_obj=False):
     t = paramXmlInfoReader(taskname)
     t.xmlParser()
     defaults = t.defaultValues()
+    defaults['options'] = ''
 
     if return_param_obj:
         return defaults, t

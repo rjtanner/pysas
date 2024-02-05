@@ -122,7 +122,14 @@ from pysas.runtask import RunTask
 # Class SASTask
 
 class SASTask(ABC):
-    """This is the abstract base class for all SAS Python tasks"""
+    """
+    This is the abstract base class for all SAS Python tasks.
+    
+    Methods:
+        - readparfile (abstract method)
+        - processargs (abstract method)
+        - runtask     (abstract method)
+    """
 
     def __init__(self, taskname, inargs):
         self.name = taskname
@@ -165,7 +172,7 @@ class MyTask(SASTask):
     The instance method 'processargs' performs the
     processing of any immediate options and filter out
     the legitimate and mandatory parameters so as
-    they can be used in the ' runtask' instance method.
+    they can be used in the 'runtask' instance method.
     """
 
     def __init__(self, taskname, inargs, logFile='DEFAULT',stdout_to_console=True):
@@ -174,6 +181,28 @@ class MyTask(SASTask):
         self.inargs = inargs
         self.logFile = logFile
         self.stdout_to_console = stdout_to_console
+
+        # Check if inargs is a 'dict'. If it is then convert to list format.
+        if isinstance(self.inargs, dict):
+            # Get dict of default inputs for the task.
+            t = paramXmlInfoReader(self.taskname)
+            t.xmlParser()
+            outdict = t.defaultValues()
+            outkeys = outdict.keys()
+            inkeys = self.inargs.keys()
+            
+            # Loop over all keys in the inargs dict and replaces values in 
+            # the outdict. Build outparams.
+            outparams = []
+            for key in list(inkeys):
+                outdict[key] = self.inargs[key]
+                if key == 'options':
+                    outparams.append(outdict[key])
+                else:
+                    outparams.append(key+'='+outdict[key])
+            
+            self.inargs = outparams
+            print(self.inargs)
 
         # Reorder self.inargs to group together all options and 
         # all args of type param=value, in that order.
