@@ -203,7 +203,6 @@ class MyTask(SASTask):
                     outparams.append(key+'='+outdict[key])
             
             self.inargs = outparams
-            print(self.inargs)
 
         # Reorder self.inargs to group together all options and 
         # all args of type param=value, in that order.
