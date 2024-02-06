@@ -100,7 +100,8 @@ def initializesas(sas_dir, sas_ccfpath, verbosity = 4, suppress_warning = 1):
     lheasoft = os.environ.get('LHEASOFT')
     if not lheasoft:
         raise Exception('LHEASOFT is not set. Please initialise HEASOFT')
-    subprocess.run(['heasoft'])
+    headas = os.path.join(lheasoft,'headas-init.sh')
+    subprocess.run(["bash",headas])
     if sas_dir is None:
         raise Exception('sas_dir must be provided to initialize SAS.')
     if sas_ccfpath is None:
