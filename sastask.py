@@ -187,20 +187,32 @@ class MyTask(SASTask):
             # Get dict of default inputs for the task.
             t = paramXmlInfoReader(self.taskname)
             t.xmlParser()
-            outdict = t.defaultValues()
-            outkeys = outdict.keys()
+            defdict = t.defaultValues()
+            defkeys = defdict.keys()
             inkeys = self.inargs.keys()
-            
-            # Loop over all keys in the inargs dict and replaces values in 
-            # the outdict. Build outparams.
             outparams = []
+            
+            # Loop over all keys in the inargs dict and add values in 
+            # the outdict, but only if different from default values. 
+            # Build outparams.
             for key in list(inkeys):
-                outdict[key] = self.inargs[key]
                 if key == 'options':
-                    if outdict[key] != '':
-                        outparams.append(outdict[key])
+                    # Only if 'options' is not empty.
+                    if self.inargs[key] != '':
+                        outparams.append(self.inargs[key])
                 else:
-                    outparams.append(key+'='+outdict[key])
+                    # Check if 'key' is in the default keys. If not, add it 
+                    # anyway. It will catch the error later when the 
+                    # arguments are processed.
+                    if key in defkeys:
+                        # Only if the default value has changed.
+                        if self.inargs[key] != defdict[key]:
+                            outparams.append(key+'='+self.inargs[key])
+                    else:
+                        # Only bad arguments will end up here.
+                        # Checks for bad arguments and error messages 
+                        # will be handled later.
+                        outparams.append(key+'='+self.inargs[key])
             
             self.inargs = outparams
 
