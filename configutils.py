@@ -26,7 +26,7 @@ configutils.py
 """
 
 # Standard library imports
-import os
+import os, subprocess
 from configparser import ConfigParser
 
 # Third party imports
@@ -100,6 +100,7 @@ def initializesas(sas_dir, sas_ccfpath, verbosity = 4, suppress_warning = 1):
     lheasoft = os.environ.get('LHEASOFT')
     if not lheasoft:
         raise Exception('LHEASOFT is not set. Please initialise HEASOFT')
+    subprocess.run(['heasoft'])
     if sas_dir is None:
         raise Exception('sas_dir must be provided to initialize SAS.')
     if sas_ccfpath is None:
