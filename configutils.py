@@ -37,7 +37,7 @@ __version__ = 'configutils (configutils-0.1)'
 
 # Function to initialize SAS
 
-def initializesas(sas_dir, sas_ccfpath, verbosity = 4, suppress_warning = 1):
+def initializesas(sas_dir, sas_ccfpath, verbosity = 4, suppress_warning = 1, image_viewer = 'ds9'):
     """
     Heasoft must be initialized first, separately.
 
@@ -100,8 +100,15 @@ def initializesas(sas_dir, sas_ccfpath, verbosity = 4, suppress_warning = 1):
     lheasoft = os.environ.get('LHEASOFT')
     if not lheasoft:
         raise Exception('LHEASOFT is not set. Please initialise HEASOFT')
-    headas = os.path.join(lheasoft,'headas-init.sh')
-    subprocess.run(["bash",headas])
+
+    add_environ_variable('HEADASNOQUERY','')
+    add_environ_variable('HEADASPROMPT','/dev/null')
+
+    try:
+        heasoft_test = subprocess.run(["fversion"],stdout = subprocess.DEVNULL)
+    except FileNotFoundError:
+        raise Exception('HEASOFT is not initialized. Please initialise HEASOFT')
+
     if sas_dir is None:
         raise Exception('sas_dir must be provided to initialize SAS.')
     if sas_ccfpath is None:
@@ -130,6 +137,7 @@ def initializesas(sas_dir, sas_ccfpath, verbosity = 4, suppress_warning = 1):
 
     os.environ['SAS_VERBOSITY'] = '{}'.format(verbosity)
     os.environ['SAS_SUPPRESS_WARNING'] = '{}'.format(suppress_warning)
+    os.environ['SAS_IMAGEVIEWER'] = '{}'.format(image_viewer)
 
     sas_path = os.environ.get('SAS_PATH')
 
