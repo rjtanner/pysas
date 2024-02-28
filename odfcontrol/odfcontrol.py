@@ -192,7 +192,7 @@ class ODFobject(object):
         self.files['pnevt_list'] = []
         for root, dirs, files in os.walk("."):  
             for filename in files:
-                if (filename.find('EPN') != -1) and filename.endswith('ImagingEvts.ds'):
+                if (filename.find('EPN') != -1) and filename.endswith('Evts.ds'):
                     self.files['pnevt_list'].append(os.path.abspath(os.path.join(root,filename)))
                     exists = True
         if exists:
@@ -638,7 +638,7 @@ class ODFobject(object):
             self.files['pnevt_list'] = []
             for root, dirs, files in os.walk("."):  
                 for filename in files:
-                    if (filename.find('EPN') != -1) and filename.endswith('ImagingEvts.ds'):
+                    if (filename.find('EPN') != -1) and filename.endswith('Evts.ds'):
                         self.files['pnevt_list'].append(os.path.abspath(os.path.join(root,filename)))
                         exists = True
             if exists and not self.rerun:    
@@ -652,7 +652,7 @@ class ODFobject(object):
                 self.files['pnevt_list'] = []
                 for root, dirs, files in os.walk("."):  
                     for filename in files:
-                        if (filename.find('EPN') != -1) and filename.endswith('ImagingEvts.ds'):
+                        if (filename.find('EPN') != -1) and filename.endswith('Evts.ds'):
                             self.files['pnevt_list'].append(os.path.abspath(os.path.join(root,filename)))
                             exists = True
                 if exists:    
