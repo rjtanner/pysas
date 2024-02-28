@@ -39,7 +39,7 @@ from ..wrapper import Wrapper as w
 
 # __version__ = f'odfcontrol (startsas-{VERSION}) [{SAS_RELEASE}-{SAS_AKA}]' 
 __version__ = 'odfcontrol (odfcontrol-0.1)'
-__all__ = ['_ODF', 'download_data']
+__all__ = ['ODFobject', 'download_data']
 
 
 class ODFobject(object):
@@ -65,6 +65,7 @@ class ODFobject(object):
         self.odfid = odfid
         self.data_dir = data_dir
         self.files = {}
+        self.set_odfid()
 
     def inisas(self,sas_dir,sas_ccfpath,verbosity=4,suppress_warning=1):
         """
@@ -79,6 +80,148 @@ class ODFobject(object):
                                     verbosity = self.verbosity, 
                                     suppress_warning = self.suppress_warning)
         print(return_info)
+
+    def set_odfid(self):
+        """
+        Checks if obs_dir exists. If it exists looks for existing 
+        odf_dir, work_dir, SAS_CCF, and SAS_ODF. Similar to odfcompile, 
+        but will not download any data, will not calibrate it, or do 
+        anything other than link to files and directories. 
+        """
+
+        # Where are we?
+        startdir = os.getcwd()
+
+        # Brief check to see if data_dir was 
+        # given on odfobject creation.
+        if self.data_dir != None:
+            data_dir = self.data_dir
+
+        # Start checking data_dir
+        data_dir = sas_cfg.get("sas", "data_dir")
+        if os.path.exists(data_dir):
+            self.data_dir = data_dir
+        else:
+            # Nothing can be done! User must run odfcompile!
+            return
+
+        # Set directories for the observation, odf, pps, and work.
+        self.obs_dir  = os.path.join(self.data_dir,self.odfid)
+        self.odf_dir  = os.path.join(self.obs_dir,'ODF')
+        self.work_dir = os.path.join(self.obs_dir,'work')
+
+        if os.path.exists(self.obs_dir):
+            print(f'obs_dir found at {self.obs_dir}.')
+            if os.path.exists(self.odf_dir):
+                print(f'odf_dir found at {self.odf_dir}.')
+            else:
+                print(f'odf_dir not found! User must run odfcompile!')
+                return
+            if os.path.exists(self.work_dir):
+                print(f'work_dir found at {self.work_dir}.')
+            else:
+                print(f'work_dir not found! User must run odfcompile!')
+                return
+        else:
+            # obs_dir not found! Nothing can be done!
+            return
+
+        logger = generate_logger(logname='odf_'+self.odfid, log_dir=self.data_dir)
+        logger.log('info', f'Data directory = {self.data_dir}')
+        logger.log('info', f'Existing directory for {self.odfid} found ...')
+        logger.log('info', f'Searching {self.data_dir}/{self.odfid} for ccf.cif and *SUM.SAS files ...')
+
+        # Looking for ccf.cif file.
+        self.files['sas_ccf'] = os.path.join('does','not','exist')
+        logger.log('info', f'Searching for ccf.cif.')
+        for path, directories, files in os.walk(self.obs_dir):
+            for file in files:
+                if 'ccf.cif' in file:
+                    logger.log('info', f'Found ccf.cif file in {path}.')
+                    self.files['sas_ccf'] = os.path.join(path,file)
+        # Check if ccf.cif file exists.
+        if os.path.exists(self.files['sas_ccf']):
+            logger.log('info', '{0} is present'.format(self.files['sas_ccf']))
+        else:
+            logger.log('error', 'ccf.cif file not present! User must run odfcompile!')
+            print('ccf.cif file not present! User must run odfcompile!')
+            return
+
+        # Set 'SAS_CCF' enviroment variable.
+        os.environ['SAS_CCF'] = self.files['sas_ccf']
+        logger.log('info', 'SAS_CCF = {0}'.format(self.files['sas_ccf']))
+        print('SAS_CCF = {}'.format(self.files['sas_ccf']))
+
+        # Looking for *SUM.SAS file.
+        self.files['sas_odf'] = os.path.join('does','not','exist')
+        logger.log('info', f'Path to *SUM.SAS file not given. Will search for it.')
+        for path, directories, files in os.walk(self.obs_dir):
+            for file in files:
+                if 'SUM.SAS' in file:
+                    logger.log('info', f'Found *SUM.SAS file in {path}.')
+                    self.files['sas_odf'] = os.path.join(path,file)
+        # Check if *SUM.SAS file exists.
+        if os.path.exists(self.files['sas_odf']):
+            logger.log('info', '{0} is present'.format(self.files['sas_odf']))
+        else:
+            logger.log('error', 'sas_odf file not present! User must run odfcompile!')
+            print('sas_odf file not present! User must run odfcompile!')
+            return
+        
+        # Check that the SUM.SAS file PATH keyword points to a real ODF directory
+        with open(self.files['sas_odf']) as inf:
+            lines = inf.readlines()
+        for line in lines:
+            if 'PATH' in line:
+                key, path = line.split()
+                if not os.path.exists(path):
+                    logger.log('error', f'Summary file PATH {path} does not exist. Rerun odfcompile with overwrite=True.')
+                    raise Exception(f'Summary file PATH {path} does not exist. Rerun odfcompile with overwrite=True.')
+                MANIFEST = glob.glob(os.path.join(path, 'MANIFEST*'))
+                if not os.path.exists(MANIFEST[0]):
+                    logger.log('error', f'Missing {MANIFEST[0]} file in {path}. Missing ODF components? Rerun odfcompile with overwrite=True.')
+                    raise Exception(f'\nMissing {MANIFEST[0]} file in {path}. Missing ODF components? Rerun odfcompile with overwrite=True.')
+        
+        # Set 'SAS_ODF' enviroment variable.
+        os.environ['SAS_ODF'] = self.files['sas_odf']
+        logger.log('info', 'SAS_ODF = {0}'.format(self.files['sas_odf']))
+        print('SAS_ODF = {0}'.format(self.files['sas_odf']))
+
+        # Check for pn event list.
+        exists = False
+        self.files['pnevt_list'] = []
+        for root, dirs, files in os.walk("."):  
+            for filename in files:
+                if (filename.find('EPN') != -1) and filename.endswith('ImagingEvts.ds'):
+                    self.files['pnevt_list'].append(os.path.abspath(os.path.join(root,filename)))
+                    exists = True
+        if exists:
+            print(" > " + str(len(self.files['pnevt_list'])) + " EPIC-pn event list found.\n")
+            for x in self.files['pnevt_list']:
+                print("    " + x + "\n")
+
+        # Check for MOS event lists.
+        exists = False
+        self.files['m1evt_list'] = []
+        self.files['m2evt_list'] = []
+        for root, dirs, files in os.walk("."):  
+            for filename in files:
+                if (filename.find('EMOS1') != -1) and filename.endswith('ImagingEvts.ds'):
+                    self.files['m1evt_list'].append(os.path.abspath(os.path.join(root,filename)))
+                    exists = True
+                if (filename.find('EMOS2') != -1) and filename.endswith('ImagingEvts.ds'):
+                    self.files['m2evt_list'].append(os.path.abspath(os.path.join(root,filename)))
+                    exists = True
+        if exists:
+            print(" > " + str(len(self.files['m1evt_list'])) + " EPIC-MOS1 event list found.\n")
+            for x in self.files['m1evt_list']:
+                print("    " + x + "\n")
+            print(" > " + str(len(self.files['m2evt_list'])) + " EPIC-MOS2 event list found.\n")
+            for x in self.files['m2evt_list']:
+                print("    " + x + "\n")
+
+        # Exit the set_odfid function. Everything is set.
+        return
 
     def sastalk(self,verbosity=4,suppress_warning=1):
         """
@@ -282,10 +425,10 @@ class ODFobject(object):
                     # Check if *SUM.SAS file exists.
                     try:
                         os.path.exists(self.files['sas_odf'])
-                        logger.log('info', '{0} is present'.format(self.files['sas_ccf']))
+                        logger.log('info', '{0} is present'.format(self.files['sas_odf']))
                     except FileExistsError:
-                        logger.log('error', 'File {0} not present! Please check if path is correct!'.format(self.files['sas_ccf']))
-                        print('File {0} not present! Please check if path is correct!'.format(self.files['sas_ccf']))
+                        logger.log('error', 'File {0} not present! Please check if path is correct!'.format(self.files['sas_odf']))
+                        print('File {0} not present! Please check if path is correct!'.format(self.files['sas_odf']))
                         sys.exit(1)
                 
                 # Check that the SUM.SAS file PATH keyword points to a real ODF directory
@@ -398,6 +541,7 @@ class ODFobject(object):
             logger.log('info', f'Setting SAS_CCF = {fullccfcif}')
             print(f'\nSetting SAS_CCF = {fullccfcif}')
             os.environ['SAS_CCF'] = fullccfcif
+            self.files['sas_ccf'] = fullccfcif
 
             # Now run odfingest
             if odfingest_opts:
@@ -434,6 +578,7 @@ class ODFobject(object):
             os.environ['SAS_ODF'] = fullsumsas
             logger.log('info', f'Setting SAS_ODF = {fullsumsas}')
             print(f'\nSetting SAS_ODF = {fullsumsas}')
+            self.files['sas_odf'] = fullsumsas
             
             # Check that the SUM.SAS file has the right PATH keyword
             with open(fullsumsas) as inf:
@@ -449,8 +594,8 @@ class ODFobject(object):
                         print(f'\nWarning: Summary file PATH keyword matches {self.odf_dir}')
 
             print(f'''\n\n
-            SAS_CCF = {fullccfcif}
-            SAS_ODF = {fullsumsas}
+            SAS_CCF = {self.files['sas_ccf']}
+            SAS_ODF = {self.files['sas_odf']}
             \n''')
 
     def runanalysis(self,task,inargs,rerun=False,logFile='DEFAULT'):
