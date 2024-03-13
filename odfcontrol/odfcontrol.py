@@ -171,54 +171,58 @@ class ODFobject(object):
         # Check that the SUM.SAS file PATH keyword points to a real ODF directory
         with open(self.files['sas_odf']) as inf:
             lines = inf.readlines()
-        for line in lines:
-            if 'PATH' in line:
-                key, path = line.split()
-                if not os.path.exists(path):
-                    logger.log('error', f'Summary file PATH {path} does not exist. Rerun odfcompile with overwrite=True.')
-                    raise Exception(f'Summary file PATH {path} does not exist. Rerun odfcompile with overwrite=True.')
-                MANIFEST = glob.glob(os.path.join(path, 'MANIFEST*'))
-                if not os.path.exists(MANIFEST[0]):
-                    logger.log('error', f'Missing {MANIFEST[0]} file in {path}. Missing ODF components? Rerun odfcompile with overwrite=True.')
-                    raise Exception(f'\nMissing {MANIFEST[0]} file in {path}. Missing ODF components? Rerun odfcompile with overwrite=True.')
+            for line in lines:
+                if 'PATH' in line:
+                    key, path = line.split()
+                    if not os.path.exists(path):
+                        logger.log('error', f'Summary file PATH {path} does not exist. Rerun odfcompile with overwrite=True.')
+                        print(f'\nSummary file PATH {path} does not exist. \n\n>>>>Rerun odfcompile with overwrite=True.')
+                    MANIFEST = glob.glob(os.path.join(path, 'MANIFEST*'))
+                    if not os.path.exists(MANIFEST[0]):
+                        logger.log('error', f'Missing {MANIFEST[0]} file in {path}. Missing ODF components? Rerun odfcompile with overwrite=True.')
+                        print(f'\nMissing {MANIFEST[0]} file in {path}. Missing ODF components? \n\n>>>>Rerun odfcompile with overwrite=True.')
         
         # Set 'SAS_ODF' enviroment variable.
         os.environ['SAS_ODF'] = self.files['sas_odf']
         logger.log('info', 'SAS_ODF = {0}'.format(self.files['sas_odf']))
         print('SAS_ODF = {0}'.format(self.files['sas_odf']))
 
-        # Check for pn event list.
-        exists = False
-        self.files['pnevt_list'] = []
-        for root, dirs, files in os.walk("."):  
-            for filename in files:
-                if (filename.find('EPN') != -1) and filename.endswith('Evts.ds'):
-                    self.files['pnevt_list'].append(os.path.abspath(os.path.join(root,filename)))
-                    exists = True
-        if exists:
-            print(" > " + str(len(self.files['pnevt_list'])) + " EPIC-pn event list found.\n")
-            for x in self.files['pnevt_list']:
-                print("    " + x + "\n")
+        self.get_active_instruments()
 
-        # Check for MOS event lists.
-        exists = False
-        self.files['m1evt_list'] = []
-        self.files['m2evt_list'] = []
-        for root, dirs, files in os.walk("."):  
+        # Check if events lists have already been made from the odf files.
+
+        inst_list = list(self.active_instruments.keys())
+        evt_list_list = {'PN': 'PNevt_list',
+                         'M1': 'M1evt_list',
+                         'M2': 'M2evt_list',
+                         'R1': 'R1evt_list',
+                         'R2': 'R2evt_list',
+                         'OM': 'OMevt_list'}
+        find_list =     {'PN': 'EPN',
+                         'M1': 'EMOS1',
+                         'M2': 'EMOS2',
+                         'R1': 'R1',
+                         'R2': 'R2',
+                         'OM': 'OM'}
+        inst_name =     {'PN': 'EPIC-pn',
+                         'M1': 'EPIC-MOS1',
+                         'M2': 'EPIC-MOS2',
+                         'R1': 'RGS1',
+                         'R2': 'RGS2',
+                         'OM': 'OM'}
+        for item in inst_list: self.files[evt_list_list[item]] = []
+
+        for inst in inst_list:
+            exists = False
+            files = glob.glob(self.obs_dir+'/**/*.ds', recursive=True)
             for filename in files:
-                if (filename.find('EMOS1') != -1) and filename.endswith('ImagingEvts.ds'):
-                    self.files['m1evt_list'].append(os.path.abspath(os.path.join(root,filename)))
+                if (filename.find(find_list[inst]) != -1) and filename.endswith('Evts.ds'):
+                    self.files[evt_list_list[inst]].append(os.path.abspath(filename))
                     exists = True
-                if (filename.find('EMOS2') != -1) and filename.endswith('ImagingEvts.ds'):
-                    self.files['m2evt_list'].append(os.path.abspath(os.path.join(root,filename)))
-                    exists = True
-        if exists:
-            print(" > " + str(len(self.files['m1evt_list'])) + " EPIC-MOS1 event list found.\n")
-            for x in self.files['m1evt_list']:
-                print("    " + x + "\n")
-            print(" > " + str(len(self.files['m2evt_list'])) + " EPIC-MOS2 event list found.\n")
-            for x in self.files['m2evt_list']:
-                print("    " + x + "\n")
+            if exists:
+                print(" > {0} {1} event list(s) found.\n".format(len(self.files[evt_list_list[inst]]),inst_name[inst]))
+                for x in self.files[evt_list_list[inst]]:
+                    print("    " + x + "\n")
 
         # Exit the set_odfid function. Everything is set.
         return
@@ -430,25 +434,27 @@ class ODFobject(object):
                         logger.log('error', 'File {0} not present! Please check if path is correct!'.format(self.files['sas_odf']))
                         print('File {0} not present! Please check if path is correct!'.format(self.files['sas_odf']))
                         sys.exit(1)
-                
+                        
                 # Check that the SUM.SAS file PATH keyword points to a real ODF directory
                 with open(self.files['sas_odf']) as inf:
                     lines = inf.readlines()
-                for line in lines:
-                    if 'PATH' in line:
-                        key, path = line.split()
-                        if not os.path.exists(path):
-                            logger.log('error', f'Summary file PATH {path} does not exist.')
-                            raise Exception(f'Summary file PATH {path} does not exist.')
-                        MANIFEST = glob.glob(os.path.join(path, 'MANIFEST*'))
-                        if not os.path.exists(MANIFEST[0]):
-                            logger.log('error', f'Missing {MANIFEST[0]} file in {path}. Missing ODF components?')
-                            raise Exception(f'\nMissing {MANIFEST[0]} file in {path}. Missing ODF components?')
+                    for line in lines:
+                        if 'PATH' in line:
+                            key, path = line.split()
+                            if not os.path.exists(path):
+                                logger.log('error', f'Summary file PATH {path} does not exist. Rerun odfcompile with overwrite=True.')
+                                raise Exception(f'Summary file PATH {path} does not exist. Rerun odfcompile with overwrite=True.')
+                            MANIFEST = glob.glob(os.path.join(path, 'MANIFEST*'))
+                            if not os.path.exists(MANIFEST[0]):
+                                logger.log('error', f'Missing {MANIFEST[0]} file in {path}. Missing ODF components? Rerun odfcompile with overwrite=True.')
+                                raise Exception(f'\nMissing {MANIFEST[0]} file in {path}. Missing ODF components? Rerun odfcompile with overwrite=True.')
                 
                 # Set 'SAS_ODF' enviroment variable.
                 os.environ['SAS_ODF'] = self.files['sas_odf']
                 logger.log('info', 'SAS_ODF = {0}'.format(self.files['sas_odf']))
                 print('SAS_ODF = {0}'.format(self.files['sas_odf']))
+
+                self.get_active_instruments()
 
                 if not os.path.exists(self.work_dir): os.mkdir(self.work_dir)
                 # Exit the odfcompile function. Everything is set.
@@ -581,17 +587,19 @@ class ODFobject(object):
             self.files['sas_odf'] = fullsumsas
             
             # Check that the SUM.SAS file has the right PATH keyword
-            with open(fullsumsas) as inf:
+            with open(self.files['sas_odf']) as inf:
                 lines = inf.readlines()
-            for line in lines:
-                if 'PATH' in line:
-                    key, path = line.split()
-                    if path != self.odf_dir:
-                        logger.log('error', f'SAS summary file PATH {path} mismatchs {self.odf_dir}')
-                        raise Exception(f'SAS summary file PATH {path} mismatchs {self.odf_dir}')
-                    else:
-                        logger.log('info', f'Summary file PATH keyword matches {self.odf_dir}')
-                        print(f'\nWarning: Summary file PATH keyword matches {self.odf_dir}')
+                for line in lines:
+                    if 'PATH' in line:
+                        key, path = line.split()
+                        if path != self.odf_dir:
+                            logger.log('error', f'SAS summary file PATH {path} mismatchs {self.odf_dir}')
+                            raise Exception(f'SAS summary file PATH {path} mismatchs {self.odf_dir}')
+                        else:
+                            logger.log('info', f'Summary file PATH keyword matches {self.odf_dir}')
+                            print(f'\nWarning: Summary file PATH keyword matches {self.odf_dir}')
+
+            self.get_active_instruments()
 
             print(f'''\n\n
             SAS_CCF = {self.files['sas_ccf']}
@@ -749,6 +757,38 @@ class ODFobject(object):
                          kwargs.get('emproc_args', []),
                          rerun = kwargs.get('rerun', False),
                          logFile=kwargs.get('logFile', 'emproc.log'))
+    
+    def get_active_instruments(self):
+        """
+        Checks odf summary file for which instruments were active for that odf.
+
+        Assumes that 'sas_odf' already exists and contains the correct path.
+
+        Also assumes file name and path are stored in self.files['sas_odf'].
+        """
+
+        # Get information about the instruments.
+        self.active_instruments = {}
+        with open(self.files['sas_odf']) as inf:
+            lines = inf.readlines()
+            for i,line in enumerate(lines):
+                if '// Instrument Record' in line:
+                    active = lines[i+4][0]
+                    if active == 'N': active = False
+                    if active == 'Y': active = True
+                    self.active_instruments[lines[i+3][0:2]] = active
+
+        # Basic sanity checks
+        bad_sum_file = False
+        inst_list = list(self.active_instruments.keys())
+        true_list = ['M1', 'M2', 'R1', 'R2', 'PN', 'OM']
+        diff = set(inst_list) ^ set(true_list)
+        if len(diff) > 0: bad_sum_file = True
+
+        if bad_sum_file:
+            print('Something is wrong with the odf summary file: {0}'.format(self.files['sas_odf']))
+
+        return
 
 def generate_logger(logname=None,log_dir=None):
     """

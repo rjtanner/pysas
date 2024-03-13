@@ -201,18 +201,19 @@ class MyTask(SASTask):
                     if self.inargs[key] != '':
                         outparams.append(self.inargs[key])
                 else:
-                    # Check if 'key' is in the default keys. If not, add it 
-                    # anyway. It will catch the error later when the 
-                    # arguments are processed.
-                    if key in defkeys:
-                        # Only if the default value has changed.
-                        if self.inargs[key] != defdict[key]:
-                            outparams.append(key+'='+self.inargs[key])
-                    else:
-                        # Only bad arguments will end up here.
-                        # Checks for bad arguments and error messages 
-                        # will be handled later.
-                        outparams.append(key+'='+self.inargs[key])
+                    outparams.append(key+'='+self.inargs[key])
+                    # # Check if 'key' is in the default keys. If not, add it 
+                    # # anyway. It will catch the error later when the 
+                    # # arguments are processed.
+                    # if key in defkeys:
+                    #     # Only if the default value has changed.
+                    #     if self.inargs[key] != defdict[key]:
+                    #         outparams.append(key+'='+self.inargs[key])
+                    # else:
+                    #     # Only bad arguments will end up here.
+                    #     # Checks for bad arguments and error messages 
+                    #     # will be handled later.
+                    #     outparams.append(key+'='+self.inargs[key])
             
             self.inargs = outparams
 
