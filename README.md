@@ -14,7 +14,7 @@ You can then use pySAS like normal.
 
 ### Running pySAS for the First Time
 
-The very first time you run this version of pySAS you can set SAS defaults that will be used by pySAS. To set the defaults run the script `setuppysas.py` found in the top level of this repository (i.e. /path/to/sas/install/xmmsas_202XXXXXX_YYYY/lib/python/pysas/setuppysas.py). This scipt will set:
+The very first time you run this version of pySAS you can set SAS defaults that will be used by pySAS. To set the defaults run the script `setuppysas.py` found in the top level of this repository (i.e. /path/to/sas/install/xmmsas_202XXXXXX_YYYY/lib/python/pysas/setuppysas.py). This script will set:
 
 - sas_dir: The directory where SAS is installed. If you are running the script from inside the SAS directory this will be auto-detected.
 - sas_ccfpath: The directory where the calibration files are stored. If you already have them downloaded, just enter the directory where they are. But if you have not downloaded them yet, you will be given the option to download them after the setup. The script will even create the directory for you.
