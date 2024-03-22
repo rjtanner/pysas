@@ -61,7 +61,8 @@ import os, subprocess, time, glob
 # Third party imports
 
 # Local application imports
-from pysas.configutils import initializesas, sas_cfg, set_sas_config_default
+from pysas.configutils import sas_cfg, set_sas_config_default
+from pysas.init_sas import initializesas
 
 __version__ = 'setuppysas (setuppysas-0.1)'
 
@@ -113,7 +114,7 @@ print(outcomment)
 positive = ['y','yes','ye','yeah','yea','ys','aye','yup','totally','si','oui']
 negative = ['n','no','not','nay','no way','nine','non']
 esa = ['esa','e','es','europe']
-nasa = ['nasa','n','na','nas','ns','nsa']
+nasa = ['nasa','n','na','nas','ns','nsa','us','usa']
 
 ############## Getting sas_dir ##############
 script_path = path = os.path.normpath(os.path.abspath(__file__))

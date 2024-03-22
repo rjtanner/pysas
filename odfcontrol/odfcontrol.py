@@ -33,9 +33,9 @@ import os, sys, subprocess, shutil, glob, tarfile, gzip
 # Local application imports
 # from .version import VERSION, SAS_RELEASE, SAS_AKA
 from ..logger import TaskLogger as TL
-from ..configutils import initializesas, sas_cfg
+from ..configutils import sas_cfg
+from ..init_sas import initializesas
 from ..wrapper import Wrapper as w
-
 
 # __version__ = f'odfcontrol (startsas-{VERSION}) [{SAS_RELEASE}-{SAS_AKA}]' 
 __version__ = 'odfcontrol (odfcontrol-0.1)'
@@ -69,7 +69,7 @@ class ODFobject(object):
 
     def inisas(self,sas_dir,sas_ccfpath,verbosity=4,suppress_warning=1):
         """
-        Simple wrapper for 'initializesas' defined in configutils.
+        Simple wrapper for 'initializesas' defined in init_sas.py.
         """
         self.sas_dir = sas_dir
         self.sas_ccfpath = sas_ccfpath

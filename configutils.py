@@ -23,144 +23,21 @@
 """
 configutils.py
 
+For configuring defaults of SAS enviroment variables.
+
 """
 
 # Standard library imports
-import os, subprocess
+import os
 from configparser import ConfigParser
 
 # Third party imports
 
 # Local application imports
 
-__version__ = 'configutils (configutils-0.1)'
+__version__ = 'configutils (configutils-1.0)'
 
-# Function to initialize SAS
-
-def initializesas(sas_dir, sas_ccfpath, verbosity = 4, suppress_warning = 1, image_viewer = 'ds9'):
-    """
-    Heasoft must be initialized first, separately.
-
-    Inputs are:
-
-        - sas_dir (required) directory where SAS is installed.
-
-        - sas_ccfpath (required) directory where calibration files are located.
-
-        - verbosity (optional, default = 4) SAS verbosity.
-
-        - suppress_warning (optional, default = 1) 
-    """
-    
-    def add_environ_variable(variable,invalue,prepend=True):
-        """
-        variable (str) is the name of the environment variable to be set.
-        
-        value (str, or list) is the value to which the environment variable
-        will be set.
-        
-        prepend (boolean) default=True, whether to prepend or append the 
-        variable
-        
-        The function first checks if the enviroment variable already exists.
-        If not it will be created and set to value.
-        If veriable alread exists the function will check if value is already
-        present. If not it will add it either prepending (default) or appending.
-
-        Returns
-        -------
-        None.
-
-        """
-        
-        if isinstance(invalue, str):
-            listvalue = [invalue]
-        else:
-            listvalue = invalue
-            
-        if not isinstance(listvalue, list):
-            raise Exception('Input to add_environ_variable must be str or list!')
-        
-        for value in listvalue:
-            environ_var = os.environ.get(variable)
-            
-            if not environ_var:
-                os.environ[variable] = value
-            else:
-                splitpath = environ_var.split(os.pathsep)
-                if not value in splitpath:
-                    if prepend:
-                        splitpath.insert(0,value)
-                    else:
-                        splitpath.append(value)
-                os.environ[variable] = os.pathsep.join(splitpath)
-
-    # Checking LHEASOFT and inputs
-
-    lheasoft = os.environ.get('LHEASOFT')
-    if not lheasoft:
-        raise Exception('LHEASOFT is not set. Please initialise HEASOFT')
-
-    add_environ_variable('HEADASNOQUERY','')
-    add_environ_variable('HEADASPROMPT','/dev/null')
-
-    try:
-        heasoft_test = subprocess.run(["fversion"],stdout = subprocess.DEVNULL)
-    except FileNotFoundError:
-        raise Exception('HEASOFT is not initialized. Please initialise HEASOFT')
-
-    if sas_dir is None:
-        raise Exception('sas_dir must be provided to initialize SAS.')
-    if sas_ccfpath is None:
-        raise Exception('sas_ccfpath must be provided to initialize SAS.')
-
-    add_environ_variable('SAS_DIR',sas_dir)
-    add_environ_variable('SAS_CCFPATH',sas_ccfpath)
-    add_environ_variable('SAS_PATH',[sas_dir])
-    
-    binpath = [os.path.join(sas_dir,'bin'), os.path.join(sas_dir,'bin','devel')]
-    libpath = [os.path.join(sas_dir,'lib'),os.path.join(sas_dir,'libextra'),os.path.join(sas_dir,'libsys')]
-    perlpath = [os.path.join(sas_dir,'lib','perl5')]
-    pythonpath = [os.path.join(sas_dir,'lib','python')]
-
-    add_environ_variable('SAS_PATH',binpath+libpath+perlpath+pythonpath,prepend=False)
-    add_environ_variable('PATH',binpath)
-    add_environ_variable('LIBRARY_PATH',libpath,prepend=False)
-    add_environ_variable('LD_LIBRARY_PATH',libpath,prepend=False)
-    add_environ_variable('PERL5LIB',perlpath)
-    add_environ_variable('PYTHONPATH',pythonpath)
-
-    perllib = os.environ.get('PERLLIB')
-    if perllib:
-        splitpath = perllib.split(os.pathsep)
-        add_environ_variable('PERL5LIB',splitpath,prepend=False)
-
-    os.environ['SAS_VERBOSITY'] = '{}'.format(verbosity)
-    os.environ['SAS_SUPPRESS_WARNING'] = '{}'.format(suppress_warning)
-    os.environ['SAS_IMAGEVIEWER'] = '{}'.format(image_viewer)
-
-    sas_path = os.environ.get('SAS_PATH')
-
-    return_info = f"""
-        SAS_DIR set to {sas_dir}
-        SAS_CCFPATH set to {sas_ccfpath}
-        SAS_PATH set to {sas_path}
-
-        {libpath} added to LIBRARY_PATH
-        {libpath} added to LD_LIBRARY_PATH
-        {perlpath} added to PERL5LIB
-        {pythonpath} added to PYTHONPATH
-    """
-    if perllib:
-        return_info += f"""{perllib} added to PERLLIB"""
-    return_info += f"""
-
-    SAS_VERBOSITY set to {verbosity}
-    SAS_SUPPRESS_WARNING set to {suppress_warning}
-    """
-
-    return return_info
-
+###############
 # Configuration
 
 sas_cfg_defaults = {
@@ -169,54 +46,49 @@ sas_cfg_defaults = {
     "data_dir": "/does/not/exist",
     "verbosity": 4,
     "suppress_warning": 1,
+    "on_sci_server": False
 }
 
-on_sci_server = False
+usr = None
+CURRENT_CONFIG_FILE = None
 
-if os.path.expanduser("~") == '/home/idies':
-    on_sci_server = True
-
-config_root = os.environ.get(
-    "XDG_CONFIG_HOME", os.path.join(os.path.expanduser("~"), ".config")
-)
-CONFIG_DIR = os.path.join(config_root, "sas")
-
-if not os.path.exists(CONFIG_DIR) and not on_sci_server:
-    try:
-        os.makedirs(CONFIG_DIR)
-    except OSError:
-        raise Exception( f'Unable to make SAS config directory: {CONFIG_DIR}')
-
-CURRENT_CONFIG_FILE = os.path.join(CONFIG_DIR, "sas.cfg")
-
-if not os.path.exists(CURRENT_CONFIG_FILE) and not on_sci_server:
-    cp = ConfigParser()
-    cp.add_section("sas")
-    try:
-        with open(CURRENT_CONFIG_FILE, "w") as new_cfg:
-            cp.write(new_cfg)
-    except IOError:
-        raise Exception( f'Unable to write to SAS config file: {CURRENT_CONFIG_FILE}')
-
-sas_cfg = ConfigParser(sas_cfg_defaults)
-if not on_sci_server:
-    sas_cfg.read([CURRENT_CONFIG_FILE, "sas.cfg"])
-if not sas_cfg.has_section("sas") and not on_sci_server:
-    sas_cfg.add_section("sas")
-
-if not on_sci_server:
-    sas_dir     = sas_cfg.get("sas", "sas_dir")
-    sas_ccfpath = sas_cfg.get("sas", "sas_ccfpath")
+if (os.path.expanduser("~") == '/home/idies') and \
+    os.path.exists('/home/idies/workspace/Storage/'):
+    # If on SciServer, get enviroment variables. Replace defaults.
+    sas_cfg_defaults['on_sci_server'] = True
+    sas_cfg_defaults['usr'] = os.listdir('/home/idies/workspace/Storage/')[0]
+    sas_dir     = os.environ.get('SAS_DIR')
+    sas_ccfpath = os.environ.get('SAS_CCFPATH')
+    sas_cfg_defaults['sas_dir']     = sas_dir
+    sas_cfg_defaults['sas_ccfpath'] = sas_ccfpath
+    sas_cfg = ConfigParser(sas_cfg_defaults)
 else:
-    sas_dir     = sas_cfg_defaults['sas_dir']
-    sas_ccfpath = sas_cfg_defaults['sas_ccfpath']
+    # If not on SciServer.
+    # Check if .config directory exists. If not, make it.
+    config_root = os.environ.get(
+        "XDG_CONFIG_HOME", os.path.join(os.environ.get('HOME'), ".config")
+    )
+    CONFIG_DIR = os.path.join(config_root, "sas")
+    if not os.path.exists(CONFIG_DIR):
+        try:
+            os.makedirs(CONFIG_DIR)
+        except OSError:
+            raise Exception( f'Unable to make SAS config directory: {CONFIG_DIR}')
 
-# Checks if defaults work.
+    # Check if sas.cfg file exists. If not, make it. Populate with defaults.
+    CURRENT_CONFIG_FILE = os.path.join(CONFIG_DIR, "sas.cfg")
+    if not os.path.exists(CURRENT_CONFIG_FILE):
+        cp = ConfigParser(sas_cfg_defaults)
+        cp.add_section("sas")
+        try:
+            with open(CURRENT_CONFIG_FILE, "w") as new_cfg:
+                cp.write(new_cfg)
+        except IOError:
+            raise Exception( f'Unable to write to SAS config file: {CURRENT_CONFIG_FILE}')
 
-if os.path.exists(sas_dir) and os.path.exists(sas_ccfpath) and not on_sci_server:
-    initializesas(sas_dir, sas_ccfpath)
-elif not on_sci_server and sas_dir != '/does/not/exist' and sas_ccfpath != '/does/not/exist':
-    print(f'There is a problem with either SAS_DIR or SAS_CCFPATH in the config file. Please set manually to initialize SAS.')
+    sas_cfg = ConfigParser(sas_cfg_defaults)
+    sas_cfg.read([CURRENT_CONFIG_FILE, "sas.cfg"])
+    if not sas_cfg.has_section("sas"): sas_cfg.add_section("sas")    
 
 ######### Functions #########
 
@@ -249,9 +121,13 @@ def set_sas_config_default(option, value):
     value : number or string
         The value to set the option to.
     """
-    set_sas_config(option, value)
-    with open(CURRENT_CONFIG_FILE, "w") as new_cfg:
-        sas_cfg.write(new_cfg)
+    if os.path.exists(CURRENT_CONFIG_FILE):
+        set_sas_config(option, value)
+        with open(CURRENT_CONFIG_FILE, "w") as new_cfg:
+            sas_cfg.write(new_cfg)
+    else:
+        print('No SAS configuration file found! Cannot set default value for:')
+        print('Option: {0} ; Value: {1}'.format(option,value))
 
 def clear_sas_defaults():
     """
@@ -262,5 +138,8 @@ def clear_sas_defaults():
             verbosity
             suppress_warning
     """
-    os.remove(CURRENT_CONFIG_FILE)
+    if os.path.exists(CURRENT_CONFIG_FILE):
+        os.remove(CURRENT_CONFIG_FILE)
+    else:
+        print('SAS configuration file, {0}, not found! Cannot remove!'.format(CURRENT_CONFIG_FILE))
 
