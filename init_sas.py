@@ -36,26 +36,7 @@ import os, subprocess
 
 # Function to initialize SAS
 
-def initializesas(sas_dir, sas_ccfpath, verbosity = 4, suppress_warning = 1, image_viewer = 'ds9'):
-    """
-    Heasoft must be initialized first, separately.
-
-    Inputs are:
-
-        - sas_dir (required) directory where SAS is installed.
-
-        - sas_ccfpath (required) directory where calibration files are located.
-
-        - verbosity (optional, default = 4) SAS verbosity.
-
-        - suppress_warning (optional, default = 1) 
-
-    Returns:
-    --------
-    Information about SAS envirment veriables that were set.
-    """
-    
-    def add_environ_variable(variable,invalue,prepend=True):
+def add_environ_variable(variable,invalue,prepend=True):
         """
         variable (str) is the name of the environment variable to be set.
         
@@ -99,6 +80,49 @@ def initializesas(sas_dir, sas_ccfpath, verbosity = 4, suppress_warning = 1, ima
                         splitpath.append(value)
                     os.environ[variable] = os.pathsep.join(splitpath)
 
+def overwrite_environ_variable(variable,invalue):
+    """
+        variable (str) is the name of the environment variable to be set.
+        
+        value (str, or list) is the value to which the environment variable
+        will be set.
+
+        Will overwrite an environment variable to a new value. Will not check
+        if variable exists or if it is defined.
+
+        Returns
+        -------
+        None.
+    """
+    if isinstance(invalue, str):
+        listvalue = [invalue]
+    else:
+        listvalue = invalue
+        
+    if not isinstance(listvalue, list):
+        raise Exception('Input to overwrite_environ_variable must be str or list!')
+    
+    os.environ[variable] = os.pathsep.join(listvalue)
+
+def initializesas(sas_dir, sas_ccfpath, verbosity = 4, suppress_warning = 1, image_viewer = 'ds9'):
+    """
+    Heasoft must be initialized first, separately.
+
+    Inputs are:
+
+        - sas_dir (required) directory where SAS is installed.
+
+        - sas_ccfpath (required) directory where calibration files are located.
+
+        - verbosity (optional, default = 4) SAS verbosity.
+
+        - suppress_warning (optional, default = 1) 
+
+    Returns:
+    --------
+    Information about SAS envirment veriables that were set.
+    """
+
     ######
     # Checking LHEASOFT and inputs
 
@@ -123,15 +147,17 @@ def initializesas(sas_dir, sas_ccfpath, verbosity = 4, suppress_warning = 1, ima
     if sas_ccfpath is None:
         raise Exception('sas_ccfpath must be provided to initialize SAS.')
 
-    add_environ_variable('SAS_DIR',sas_dir)
-    add_environ_variable('SAS_CCFPATH',sas_ccfpath)
-    add_environ_variable('SAS_PATH',[sas_dir])
+    # Hard overwrite. To set or reset values.
+    overwrite_environ_variable('SAS_DIR',sas_dir)
+    overwrite_environ_variable('SAS_CCFPATH',sas_ccfpath)
+    overwrite_environ_variable('SAS_PATH',[sas_dir])
     
     binpath = [os.path.join(sas_dir,'bin'), os.path.join(sas_dir,'bin','devel')]
     libpath = [os.path.join(sas_dir,'lib'),os.path.join(sas_dir,'libextra'),os.path.join(sas_dir,'libsys')]
     perlpath = [os.path.join(sas_dir,'lib','perl5')]
     pythonpath = [os.path.join(sas_dir,'lib','python')]
 
+    # Soft add. Will only add if value does not exist in enviroment variable.
     add_environ_variable('SAS_PATH',binpath+libpath+perlpath+pythonpath,prepend=False)
     add_environ_variable('PATH',binpath)
     add_environ_variable('LIBRARY_PATH',libpath,prepend=False)

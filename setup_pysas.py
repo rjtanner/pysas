@@ -36,13 +36,13 @@
     subdirectory will be made for each observation ID (obsID).
     
     The default data directory can be set or change later using the 
-    function set_sas_config_default().
+    function set_sas_config_option().
 
     For example:
 
-        from pysas.configutils import set_sas_config_default
+        from pysas.configutils import set_sas_config_option
         data_path = '/path/to/data/dir/'
-        set_sas_config_default('data_dir', data_path)
+        set_sas_config_option('data_dir', data_path)
         
     The default values for the SAS directory (sas_dir), the path to the
     calibration files (sas_ccfpath), along with 'verbosity' and 
@@ -61,7 +61,7 @@ import os, subprocess, time, glob
 # Third party imports
 
 # Local application imports
-from pysas.configutils import sas_cfg, set_sas_config_default
+from pysas.configutils import sas_cfg, set_sas_config_option
 from pysas.init_sas import initializesas
 
 __version__ = 'setuppysas (setuppysas-0.1)'
@@ -88,13 +88,13 @@ outcomment = """
     subdirectory will be made for each observation ID (obsID).
     
     The default data directory can be set or change later using the 
-    function set_sas_config_default().
+    function set_sas_config_option().
 
     For example:
 
-        from pysas.configutils import set_sas_config_default
+        from pysas.configutils import set_sas_config_option
         data_path = '/path/to/data/dir/'
-        set_sas_config_default('data_dir', data_path)
+        set_sas_config_option('data_dir', data_path)
         
     The default values for the SAS directory (sas_dir), the path to the
     calibration files (sas_ccfpath), along with 'verbosity' and 
@@ -251,13 +251,13 @@ if not os.path.isdir(data_dir):
     print(f'{data_dir} has been created!')
 else:
     print(f'\nData directory exists. Will use {data_dir} to download data.')
-set_sas_config_default('data_dir',data_dir)
+set_sas_config_option('data_dir',data_dir)
 
 # Check if paths for SAS_DIR and SAS_CCFPATH exist.
 if os.path.exists(sas_dir) and os.path.exists(sas_ccfpath):
     print('SAS_DIR and SAS_CCFPATH exist. Will use SAS_DIR and SAS_CCFPATH to initialize SAS.')
-    set_sas_config_default('sas_dir',sas_dir)
-    set_sas_config_default('sas_ccfpath',sas_ccfpath)
+    set_sas_config_option('sas_dir',sas_dir)
+    set_sas_config_option('sas_ccfpath',sas_ccfpath)
     initializesas(sas_dir, sas_ccfpath, verbosity=verbosity,suppress_warning=suppress_warning)
 else:
     if not os.path.exists(sas_dir):
@@ -294,8 +294,8 @@ scomment = f"""
 
     The defaults can be changed at any time using the commands:
 
-        from pysas.configutils import set_sas_config_default
-        set_sas_config_default('value_to_set',value)
+        from pysas.configutils import set_sas_config_option
+        set_sas_config_option('value_to_set',value)
 
     At any time the user can clear all previous values with,
 

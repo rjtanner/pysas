@@ -49,7 +49,6 @@ sas_cfg_defaults = {
     "on_sci_server": False
 }
 
-usr = None
 CURRENT_CONFIG_FILE = None
 
 if (os.path.expanduser("~") == '/home/idies') and \
@@ -92,23 +91,7 @@ else:
 
 ######### Functions #########
 
-def set_sas_config(option, value):
-    """
-    Set SAS configuration values.
-
-    This sets values temporarily for the session.
-
-    Parameters
-    ----------
-    option : string
-        The option to change.
-    value : number or string
-        The value to set the option to.
-    """
-    option = option.lower()
-    sas_cfg.set("sas", option, value=str(value))
-
-def set_sas_config_default(option, value):
+def set_sas_config_option(option, value):
     """
     Set default SAS configuration values.
 
@@ -122,7 +105,8 @@ def set_sas_config_default(option, value):
         The value to set the option to.
     """
     if os.path.exists(CURRENT_CONFIG_FILE):
-        set_sas_config(option, value)
+        option = option.lower()
+        sas_cfg.set("sas", option, value=str(value))
         with open(CURRENT_CONFIG_FILE, "w") as new_cfg:
             sas_cfg.write(new_cfg)
     else:
@@ -131,7 +115,7 @@ def set_sas_config_default(option, value):
 
 def clear_sas_defaults():
     """
-    Clears all SAS defaults set by user. User will have to reinitalize SAS.
+    Clears all SAS defaults set by user. User will have to reset SAS defaults.
             sas_dir
             sas_ccfpath
             data_dir
